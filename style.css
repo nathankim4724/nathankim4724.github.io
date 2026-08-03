@@ -39,6 +39,15 @@ main {
   margin: auto;
 }
 
+.portrait {
+  display: block;
+  width: 88px;
+  height: 88px;
+  margin: 0 0 1.25rem;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
 h1 {
   margin: 0;
   font-size: 1.75rem;
