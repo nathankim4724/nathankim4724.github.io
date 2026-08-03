@@ -33,9 +33,24 @@ whole, and all 26 draw at one shared speed — a true radial wave, no per-frame
 JavaScript. Dashing restarts at each subpath, so one `<path>` grows all of its
 chains at once.
 
+### Framing
+
+The tree fans through a limited range of headings, and every branch stops at
+exactly `MAX_DEPTH` — so its silhouette is a fan with a bare wedge beside it, ending
+in a smooth frontier where all the tips line up at the same distance from the root.
+Fitted whole to the screen it covers only ~73% of the viewport and puts that edge
+in frame.
+
+`ZOOM` and `ANCHOR_X`/`ANCHOR_Y` scale past the fit and pin the dense interior to
+the centre, pushing the wedge and the frontier off-screen. 2× at (0.35, 0.35) is
+the gentlest crop that fully covers every viewport shape from 320×568 to 3840×2160.
+Set `ZOOM = 1` and both anchors to `0.5` to frame the whole silhouette instead.
+
 To retune, edit the constants at the top of `collatz.js` (`EVEN_TURN`, `ODD_TURN`,
-`MAX_DEPTH`, `START_HEADING`, `GROW_MS`). Keep `collatz.py` in step and re-run it
-so the `<noscript>` fallback still matches:
+`MAX_DEPTH`, `START_HEADING`, `GROW_MS`, `ZOOM`, `ANCHOR_X`, `ANCHOR_Y`). Keep
+`collatz.py` in step and re-run it to refresh the `<noscript>` fallback — note the
+fallback is plain `background-size: cover`, so it shows the whole uncropped
+silhouette rather than the zoomed framing:
 
 ```sh
 python3 collatz.py

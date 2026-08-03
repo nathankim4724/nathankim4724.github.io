@@ -24,6 +24,18 @@
   const PAD = 0.03;             // fraction of the long side kept clear at the edges
   const GROW_MS = 2200;         // time for the wave to travel from root to tips
 
+  /* The tree fans through a limited range of headings and every branch stops at
+   * exactly MAX_DEPTH, so its silhouette is a fan with a bare wedge beside it and
+   * a smooth outer frontier where the tips line up. Fitting the whole silhouette
+   * to the screen therefore leaves ~27% of the viewport empty and puts a visible
+   * edge in frame. Scaling past that and anchoring on the dense interior pushes
+   * both off-screen. 2x at (0.35, 0.35) of the bounding box is the gentlest crop
+   * that fills every viewport shape tested, from 320x568 up to 3840x2160.
+   * Set ZOOM = 1 and both anchors to 0.5 to frame the whole silhouette instead. */
+  const ZOOM = 2.0;
+  const ANCHOR_X = 0.35;        // point of the tree's bounding box pinned to the
+  const ANCHOR_Y = 0.35;        // centre of the viewport, as a 0..1 fraction
+
   const svg = document.getElementById('coral');
   if (!svg) return;
 
@@ -102,14 +114,14 @@
   }
   const order = [...buckets.keys()].sort((a, b) => a - b);
 
-  /* Lay the tree over the viewport the way `background-size: cover` would:
-   * scale until it covers both axes, then centre. */
+  /* Lay the tree over the viewport: scale until it covers both axes the way
+   * `background-size: cover` would, apply ZOOM, then pin the anchor to centre. */
   function draw(animate) {
     const w = svg.clientWidth || innerWidth;
     const h = svg.clientHeight || innerHeight;
-    const s = Math.max(w / (bw + 2 * pad), h / (bh + 2 * pad));
-    const ox = (w - bw * s) / 2 - x0 * s;
-    const oy = (h - bh * s) / 2 + y1 * s;  // y is flipped: SVG's axis grows downward
+    const s = Math.max(w / (bw + 2 * pad), h / (bh + 2 * pad)) * ZOOM;
+    const ox = w / 2 - (x0 + bw * ANCHOR_X) * s;
+    const oy = h / 2 + (y1 - bh * ANCHOR_Y) * s;  // y flipped: SVG's axis grows down
 
     let out = '';
     for (const d of order) {
