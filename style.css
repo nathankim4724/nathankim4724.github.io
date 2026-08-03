@@ -1,16 +1,14 @@
 :root {
-  --bg: #fdfdfc;
+  --bg: #fbfbfa;
   --text: #17171a;
-  --muted: #71716c;
-  --rule: #e5e5e0;
+  --muted: #77776f;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --bg: #131316;
     --text: #eaeae6;
-    --muted: #97978f;
-    --rule: #2a2a2e;
+    --muted: #92928a;
   }
 }
 
@@ -19,67 +17,62 @@
 html { -webkit-text-size-adjust: 100%; }
 
 body {
+  display: flex;
+  min-height: 100vh;
+  min-height: 100svh;
   margin: 0;
-  padding: 0 1.5rem;
+  padding: 3rem 1.5rem;
   background: var(--bg);
   color: var(--text);
   font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
   font-size: 17px;
-  line-height: 1.7;
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* `margin: auto` centers on both axes without clipping overflow
+   the way `align-items: center` would on short viewports. */
 main {
-  max-width: 34rem;
-  margin: 0 auto;
-  padding: 8rem 0 6rem;
+  width: 100%;
+  max-width: 32rem;
+  margin: auto;
 }
 
 h1 {
   margin: 0;
-  font-size: 1.5rem;
-  font-weight: 600;
-  letter-spacing: -0.015em;
-}
-
-.tagline {
-  margin: 0.4rem 0 0;
-  color: var(--muted);
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
 .bio {
-  margin: 2.25rem 0 0;
+  margin: 0.5rem 0 0;
 }
 
 .links {
   display: flex;
   flex-wrap: wrap;
-  gap: 1.5rem;
-  margin-top: 3rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid var(--rule);
+  gap: 1.75rem;
+  margin-top: 1.5rem;
   font-size: 0.9375rem;
 }
 
 a {
   color: var(--muted);
   text-decoration: none;
-  border-bottom: 1px solid var(--rule);
-  padding-bottom: 1px;
-  transition: color 0.15s ease, border-color 0.15s ease;
+  transition: color 0.15s ease;
 }
 
 a:hover,
 a:focus-visible {
   color: var(--text);
-  border-bottom-color: currentColor;
 }
 
 a:focus-visible {
   outline: 2px solid currentColor;
-  outline-offset: 4px;
-  border-radius: 1px;
+  outline-offset: 3px;
+  border-radius: 2px;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -87,6 +80,5 @@ a:focus-visible {
 }
 
 @media (max-width: 480px) {
-  main { padding: 4.5rem 0 4rem; }
-  h1 { font-size: 1.375rem; }
+  h1 { font-size: 1.5rem; }
 }
