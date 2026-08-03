@@ -62,7 +62,7 @@ each end so the two still abut exactly.
 Depth used to be 37, at 18,119 nodes. The extra five levels land almost entirely
 in the tip region, where branches are already closer together than a stroke is
 wide, so they arrived as a flat grey smear rather than as detail — and cost 3.2×
-the nodes and 8× the crossings to do it.
+the nodes to do it.
 
 The stroke widths above are drawn for a tree scaled to ~60px per edge, which is
 where nearly every laptop and 1080p viewport lands, and where `MIN_SCALE` holds
@@ -96,43 +96,14 @@ viewport from 1366×768 up already clears, so it changes nothing there. Below th
 it trades a little of the tree for the same texture everywhere. The floor cannot
 uncover an edge, because it only moves in the direction the anchor already points.
 
-### Glints
-
-The small slate dots sit on crossings — points where two strands pass over each
-other. `collatz.js` finds them by bucketing all 5,617 segments into unit cells and
-testing pairs within a cell; since every edge is one unit long, each cell holds
-only a handful and the search stays near-linear. A crossing lies in exactly one
-cell and both its segments are bucketed there, so accepting it only in its own
-cell counts it once without a dedup table.
-
-Crossings are computed in unit space, because `draw()` only ever applies a
-similarity transform and those preserve intersections — so resizing re-projects
-the same points rather than searching again. They are then thinned to at most one
-per grid cell so the dots scatter evenly instead of clumping in the dense regions,
-and any dot whose halo would be clipped by the viewport edge is dropped.
-
-The search turns up ~12,600 crossings, and the dots stay hidden until the growth
-finishes, so it runs in `requestIdleCallback` rather than holding up the first
-paint. `DOTS` then thins that down to the ~50 that reach the screen. Each dot is a
-core inside a soft radial halo, dim for most of its cycle with one brief flare;
-period and phase come from a hash of the dot's index, so the flares scatter
-instead of landing on a shared beat.
-
-A glint also carries the depth of the crossing it sits on, and both its opacity
-and its radius fall with it. Without that, a crossing between two dissolved tips
-gets the same dot as one on a visible branch, and it reads as a speck floating in
-empty space rather than as a strand catching the light.
-
 ### Retuning
 
 Edit the constants at the top of `collatz.js`: the tree (`EVEN_TURN`, `ODD_TURN`,
 `MAX_DEPTH`, `START_HEADING`), the framing (`ZOOM`, `ANCHOR_X`, `ANCHOR_Y`,
 `MIN_SCALE`, `PAD`), the depth ramp (`BANDS`, `NEAR_WIDTH`, `FAR_WIDTH`,
-`NEAR_ALPHA`, `FAR_ALPHA`, `RAMP`, `GAUGE`, `GAUGE_MIN`, `GAUGE_MAX`), the glints
-(`DOTS`, `CORE_R`, `HALO_R`,
-`GLINT_HI`, `GLINT_LO`, `GLINT_FADE`, `GLINT_FLOOR`) and the motion (`GROW_MS`,
-`TWINKLE_MIN`, `TWINKLE_MAX`). Keep `collatz.py` in step and re-run it to refresh
-the `<noscript>` fallback:
+`NEAR_ALPHA`, `FAR_ALPHA`, `RAMP`, `GAUGE`, `GAUGE_MIN`, `GAUGE_MAX`) and the
+growth (`GROW_MS`). Keep `collatz.py` in step and re-run it to refresh the
+`<noscript>` fallback:
 
 ```sh
 python3 collatz.py
@@ -144,12 +115,10 @@ browser would have drawn, rather than showing the whole uncropped silhouette. It
 has no `MIN_SCALE`: the fallback is one fixed image that CSS scales, so there is
 no per-viewport scale to put a floor under.
 
-The page is light-only (`color-scheme: light`). `--ink` and `--glint-color` in
-`style.css` set the two colours, and `--coral` and `--glints` are master dials
-over the whole ramp — the drawing already grades itself, so these multiply rather
-than set a level. The growth and the twinkle are both skipped under
-`prefers-reduced-motion`, which renders the finished tree and static dots
-immediately.
+The page is light-only (`color-scheme: light`). `--ink` in `style.css` sets the
+colour, and `--coral` is a master dial over the whole ramp — the drawing already
+grades itself, so it multiplies rather than sets a level. The growth is skipped
+under `prefers-reduced-motion`, which renders the finished tree immediately.
 
 ## The card
 
@@ -158,11 +127,9 @@ on plain white while the coral runs out to the margins. Its padding is part of t
 block, which is why `max-width` is 61rem for a 56rem content column.
 
 That block is also what keeps the contrast question off the table: no text overlaps
-a strand or a glint any more. `--muted` (`#3d3d38`) reads 10.9:1 on the card. It
-used to be sized against the drawing itself — a link over a glint at full flare
-would be about 2.3:1 now, worse than the 3.2:1 the old sky-blue gave, because the
-slate is darker and so sits closer to the text. If the card ever goes away, both
-the glints and the near end of the depth ramp have to come down with it.
+a strand any more. `--muted` (`#3d3d38`) reads 10.9:1 on the card. It used to be
+sized against the drawing itself; if the card ever goes away, the near end of the
+depth ramp has to come down with it.
 
 ## Local preview
 

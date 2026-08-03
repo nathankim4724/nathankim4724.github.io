@@ -82,18 +82,6 @@
   const GAUGE = 60;
   const GAUGE_MIN = 0.85, GAUGE_MAX = 1.7;
 
-  // Target glints on screen. The thinning grid is sized by area, so the count
-  // lands near this rather than under it -- 48 to 54 across the sizes tested.
-  const DOTS = 52;
-  const CORE_R = 1.9;           // px at GAUGE
-  const HALO_R = 9;
-  const GLINT_HI = 0.95;        // opacity at the top of a flare
-  const GLINT_LO = 0.42;        // ... and between flares
-  const GLINT_FADE = 1.0;       // how fast a glint dims with the depth it sits at
-  const GLINT_FLOOR = 0.45;     // ... and how faint it is allowed to get
-  const TWINKLE_MIN = 7;        // seconds, shortest flash cycle
-  const TWINKLE_MAX = 15;       // seconds, longest
-
   const svg = document.getElementById('coral');
   if (!svg) return;
 
@@ -195,80 +183,6 @@
   }
   const order = [...buckets.keys()].sort((a, b) => a - b);
 
-  /* Find where two strands cross on top of each other. draw() only ever applies
-   * a similarity transform (uniform scale, translate, flip), and those preserve
-   * intersections -- so this runs once in unit space and the results are simply
-   * re-projected on resize, which also keeps each glint's identity stable.
-   *
-   * Every edge is one unit long, so a 1x1 bucket grid puts only a handful of
-   * candidates in each cell and the pair test stays near-linear. */
-  function crossings() {
-    // Flat, stride 6: x0 y0 x1 y1 nodeA nodeB. Avoids 5617 small arrays.
-    const seg = [];
-    for (let i = 0; i < xs.length; i++)
-      for (const j of kids[i]) seg.push(xs[i], ys[i], xs[j], ys[j], i, j);
-    const count = seg.length / 6;
-
-    // Bucket by unit cell. Coordinates span roughly x -32..8, y -27..1, so an
-    // integer key beats string concatenation by a wide margin here.
-    const KEY = (cx, cy) => (cx + 256) * 1024 + (cy + 256);
-    const grid = new Map();
-    for (let n = 0; n < count; n++) {
-      const o = n * 6;
-      const cx1 = Math.floor(Math.max(seg[o], seg[o + 2]));
-      const cy1 = Math.floor(Math.max(seg[o + 1], seg[o + 3]));
-      for (let cx = Math.floor(Math.min(seg[o], seg[o + 2])); cx <= cx1; cx++)
-        for (let cy = Math.floor(Math.min(seg[o + 1], seg[o + 3])); cy <= cy1; cy++) {
-          const k = KEY(cx, cy);
-          const b = grid.get(k);
-          if (b) b.push(n); else grid.set(k, [n]);
-        }
-    }
-
-    // Flat, stride 3: x y depth. The depth is the deeper of the two strands, and
-    // it is what paintDots() dims the glint by, so a glint never burns brighter
-    // than the strands it is supposed to be sitting on.
-    const out = [];
-    for (const [k, bucket] of grid) {
-      const cx = Math.floor(k / 1024) - 256, cy = (k % 1024) - 256;
-      for (let p = 0; p < bucket.length; p++) {
-        const a = bucket[p] * 6;
-        for (let q = p + 1; q < bucket.length; q++) {
-          const b = bucket[q] * 6;
-          // Segments meeting at a shared node touch but do not cross.
-          if (seg[a + 4] === seg[b + 4] || seg[a + 4] === seg[b + 5] ||
-              seg[a + 5] === seg[b + 4] || seg[a + 5] === seg[b + 5]) continue;
-          const rx = seg[a + 2] - seg[a], ry = seg[a + 3] - seg[a + 1];
-          const sx = seg[b + 2] - seg[b], sy = seg[b + 3] - seg[b + 1];
-          const den = rx * sy - ry * sx;
-          if (!den) continue;
-          const dx = seg[b] - seg[a], dy = seg[b + 1] - seg[a + 1];
-          const t = (dx * sy - dy * sx) / den;
-          if (t <= 0.02 || t >= 0.98) continue;
-          const u = (dx * ry - dy * rx) / den;
-          if (u <= 0.02 || u >= 0.98) continue;
-          const x = seg[a] + t * rx, y = seg[a + 1] + t * ry;
-          // A crossing lies in exactly one cell, and both its segments are
-          // bucketed there -- so accepting it only in that cell counts it once
-          // and needs no dedup table.
-          if (Math.floor(x) !== cx || Math.floor(y) !== cy) continue;
-          out.push(x, y, Math.max(depth[seg[a + 5]], depth[seg[b + 5]]));
-        }
-      }
-    }
-    return out;
-  }
-
-  let glints = null;   // flat triples x, y, depth once computed
-
-  /* Cheap integer hash, so each glint's priority and twinkle timing follow from
-   * its index instead of costing three Math.random() calls apiece. */
-  function rnd(n) {
-    n = Math.imul(n ^ (n >>> 15), 0x2c1b3c6d);
-    n = Math.imul(n ^ (n >>> 12), 0x297a2d39);
-    return ((n ^ (n >>> 15)) >>> 0) / 4294967296;
-  }
-
   /* Lay the tree over the viewport: scale until it covers both axes the way
    * `background-size: cover` would, apply ZOOM, then pin the anchor to centre. */
   function draw(animate) {
@@ -322,71 +236,10 @@
              ` stroke-opacity="${alpha.toFixed(3)}"${style}/>`;
     }
 
-    view = { w, h, s, ox, oy, gauge };
-    svg.innerHTML =
-      '<defs><radialGradient id="coral-glow">' +
-      '<stop class="s0" offset="0"/><stop class="s1" offset="0.45"/><stop class="s2" offset="1"/>' +
-      '</radialGradient></defs>' +
-      `<g class="strands">${out}</g>` +
-      `<g class="glints"${animate ? ` style="--in:${GROW_MS}ms"` : ''}></g>`;
-    paintDots();
+    svg.innerHTML = `<g class="strands">${out}</g>`;
   }
 
-  /* Place the glints. Split out from draw() so the crossing search can happen
-   * off the critical path -- the strands paint first, and these arrive later
-   * into the layer draw() left empty. */
-  function paintDots() {
-    const layer = svg.querySelector('.glints');
-    if (!layer || !glints || !view) return;
-    const { w, h, s, ox, oy, gauge } = view;
-    const edge = HALO_R * gauge;   // keep whole haloes in frame, never half a dot
-
-    /* Thin the crossings to an even scatter. They cluster hard in the dense
-     * regions, so a plain random sample would clump; instead keep at most one
-     * per cell of a grid sized to the target count, lowest rank winning. */
-    const cellPx = Math.sqrt(w * h / DOTS);
-    const picked = new Map();
-    for (let i = 0; i < glints.length; i += 3) {
-      const px = glints[i] * s + ox, py = oy - glints[i + 1] * s;
-      if (px < edge || py < edge || px > w - edge || py > h - edge) continue;
-      const id = i / 3, rank = rnd(id);
-      const k = Math.floor(px / cellPx) * 4096 + Math.floor(py / cellPx);
-      const cur = picked.get(k);
-      if (!cur || rank < cur.rank) picked.set(k, { id, rank, px, py, d: glints[i + 2] });
-    }
-
-    let dots = '';
-    for (const { id, px, py, d } of picked.values()) {
-      // Track the strands underneath: a crossing out in the dissolved tips gets
-      // a fainter, smaller glint than one on a branch you can actually see.
-      const k = GLINT_FLOOR + (1 - GLINT_FLOOR) *
-                Math.pow(1 - d / MAX_DEPTH, GLINT_FADE);
-      const period = TWINKLE_MIN + rnd(id * 2 + 1) * (TWINKLE_MAX - TWINKLE_MIN);
-      // A negative delay starts the cycle already in progress, which is what
-      // scatters the flashes instead of firing them all on the same beat.
-      const timing = twinkle
-        ? `--per:${period.toFixed(1)}s;--ph:${(-rnd(id * 3 + 2) * period).toFixed(1)}s;`
-        : '';
-      dots += `<g class="${twinkle ? 'glint tw' : 'glint'}"` +
-              ` style="${timing}--hi:${(GLINT_HI * k).toFixed(3)};--lo:${(GLINT_LO * k).toFixed(3)}"` +
-              ` transform="translate(${px.toFixed(1)} ${py.toFixed(1)})">` +
-              `<circle class="halo" r="${(HALO_R * (0.75 + 0.25 * k) * gauge).toFixed(2)}"/>` +
-              `<circle class="core" r="${(CORE_R * (0.8 + 0.2 * k) * gauge).toFixed(2)}"/></g>`;
-    }
-
-    layer.innerHTML = dots;
-  }
-
-  const still = matchMedia('(prefers-reduced-motion: reduce)');
-  const twinkle = !still.matches;
-  let view = null;
-  draw(twinkle);
-
-  /* Hunting the crossings costs far more than drawing the tree, and the glints
-   * stay hidden until the growth finishes -- so it waits for an idle moment
-   * rather than holding up the first paint. */
-  const idle = window.requestIdleCallback || (fn => setTimeout(fn, 1));
-  idle(() => { glints = crossings(); paintDots(); });
+  draw(!matchMedia('(prefers-reduced-motion: reduce)').matches);
 
   /* Re-fit on resize. The tree itself is scale-invariant, so only the transform
    * is recomputed -- and the growth never replays, it has already been seen. */
