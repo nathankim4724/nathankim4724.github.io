@@ -1,17 +1,16 @@
 :root {
-  --bg: #fbfbfa;
+  color-scheme: light; /* light only, so the browser leaves the whites alone */
+  --bg: #ffffff;
   --text: #17171a;
-  --muted: #5f5f58; /* dark enough to clear WCAG AA over the coral */
-  --coral: 0.13;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #131316;
-    --text: #eaeae6;
-    --muted: #a3a39b;
-    --coral: 0.16;
-  }
+  --muted: #3d3d38; /* 10.9:1 on the card, which is what the links sit on now */
+  /* Master dials for the drawing. collatz.js already grades every strand and
+     every glint by depth, so these two multiply the whole ramp rather than
+     setting a single level: turn them down to push the artwork back. */
+  --coral: 1;
+  --glints: 1;
+  --ink: #28303a;         /* near-black with a cool cast, to sit with the glints */
+  --glint-color: #4a6f8f; /* slate, not sky -- loud enough to find, quiet enough
+                             not to outrank the card */
 }
 
 * { box-sizing: border-box; }
@@ -27,8 +26,8 @@ body {
   background: var(--bg);
   color: var(--text);
   font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-  font-size: 17px;
-  line-height: 1.6;
+  font-size: 15.5px;
+  line-height: 1.45;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -41,16 +40,28 @@ body {
   z-index: -1;
   width: 100%;
   height: 100%;
-  opacity: var(--coral);
   transform: scaleX(-1); /* strands sweep up and to the right, away from the text */
   pointer-events: none;
 }
 
+/* Two layers, so the glints are not held down to the strands' opacity. */
+#coral .strands { opacity: var(--coral); }
+#coral .glints { opacity: var(--glints); }
+
+/* Width and alpha are presentation attributes, not properties: collatz.js sets
+   one of each per depth band, and a rule here would outrank both.
+
+   Butt caps, deliberately. Two pieces meet at every branch and at every band
+   boundary, and a round cap puts a half-disc of ink at each end of each -- so
+   with alpha now on the stroke rather than on the layer, the two discs composite
+   and bead the strand with a dark dot at every joint. Butt caps leave nothing at
+   the ends to double up. What they cost is a notch on the outside of the turn,
+   which at 8 degrees and 2.4px is a third of a pixel, and square tips out at
+   0.55px wide, which is nothing at all. */
 #coral path {
   fill: none;
-  stroke: #808080; /* mid grey, so one colour suits both light and dark themes */
-  stroke-width: 1.2;
-  stroke-linecap: round;
+  stroke: var(--ink);
+  stroke-linecap: butt;
   stroke-linejoin: round;
 }
 
@@ -61,8 +72,8 @@ body {
 
    The huge gap keeps the pattern's *second* dash away from the far end of a
    full-length chain, and starting one pixel past --len keeps the first dash's
-   trailing edge off position 0. Both would otherwise land as zero-length
-   dashes, which round caps paint as visible dots. */
+   trailing edge off position 0. Butt caps paint nothing at a zero-length dash,
+   so neither is load-bearing any more, but both are free. */
 @keyframes coral-grow {
   from { stroke-dashoffset: calc(var(--len) + 1px); }
 }
@@ -75,42 +86,106 @@ body {
   animation-fill-mode: both;
 }
 
+/* Glints: a bright core inside a soft radial halo, sitting on the crossings
+   collatz.js found. Fills live here rather than on the elements so the halo's
+   gradient is not overridden -- a CSS `fill` beats a presentation attribute. */
+#coral .core { fill: var(--glint-color); }
+#coral .halo { fill: url(#coral-glow); }
+#coral .s0 { stop-color: var(--glint-color); stop-opacity: 0.7; }
+#coral .s1 { stop-color: var(--glint-color); stop-opacity: 0.22; }
+#coral .s2 { stop-color: var(--glint-color); stop-opacity: 0; }
+
+/* --hi and --lo are the top and bottom of this glint's range, and collatz.js
+   scales both by the depth of the crossing, so a glint out among the dissolved
+   tips is dim even at its brightest. Nothing here sets a level of its own. */
+#coral .glint { opacity: var(--hi, 0.7); }
+
+/* Dim for most of the cycle, with one brief flare -- a twinkle rather than a
+   pulse. Each dot carries its own period and a negative delay for phase, so the
+   flares scatter instead of landing on a shared beat. The floor sits high enough
+   that a dot between flares still reads as a light, not as nothing. */
+@keyframes coral-twinkle {
+  0%, 100% { opacity: var(--lo); }
+  6% { opacity: var(--hi); }
+  20% { opacity: var(--lo); }
+}
+
+#coral .glint.tw {
+  animation-name: coral-twinkle;
+  animation-duration: var(--per);
+  animation-delay: var(--ph);
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+
+/* Hold the glints back until the tree has finished growing. */
+@keyframes coral-glints-in {
+  from { opacity: 0; }
+}
+
+#coral .glints[style] {
+  animation: coral-glints-in 900ms var(--in) both;
+}
+
 /* `margin: auto` centers on both axes without clipping overflow
    the way `align-items: center` would on short viewports. */
+/* Portrait beside the text on wide screens, stacked below 720px. The card is
+   wide enough that the text column still reads at ~36rem next to the photo.
+
+   An opaque white card, so the coral runs behind the page rather than through
+   it: the strands and glints stay legible out at the margins while the text
+   sits on plain white. The padding is part of the block, so max-width carries
+   it on top of the 56rem the content itself wants. */
 main {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 2.75rem;
   width: 100%;
-  max-width: 32rem;
+  max-width: 61rem;
   margin: auto;
+  padding: 2.5rem;
+  background: var(--bg);
+  border-radius: 16px;
+  /* A hairline to hold the edge where a pale strand passes under it, over a
+     soft drop shadow that lifts the block off the drawing. */
+  box-shadow: 0 0 0 1px rgba(23, 23, 26, 0.05),
+              0 18px 40px -18px rgba(23, 23, 26, 0.28);
+}
+
+.intro {
+  flex: 1 1 24rem;
+  min-width: 0;
 }
 
 /* Uncropped: nathan.jpg is the full-height original trimmed only on the sides,
    widened to the right so the head sits centred. Nothing is masked away here. */
 .portrait {
   display: block;
-  width: clamp(180px, 45vw, 250px);
+  flex: 0 0 auto;
+  width: clamp(180px, 45vw, 260px);
   height: auto;
   aspect-ratio: 1000 / 1228;
-  margin: 0 0 2.25rem;
+  margin: 0;
   border-radius: 8px;
   object-fit: contain;
 }
 
 h1 {
   margin: 0;
-  font-size: 1.75rem;
+  font-size: 1.6rem;
   font-weight: 700;
   letter-spacing: -0.02em;
 }
 
 .bio {
-  margin: 1.5rem 0 0;
+  margin: 1rem 0 0;
   color: var(--text);
 }
 
 /* Each sentence is its own beat, so the gap between them carries the rhythm. */
 .bio p {
-  margin: 0 0 1.5rem;
-  max-width: 30rem;
+  margin: 0 0 0.9rem;
   text-wrap: pretty;
 }
 
@@ -121,9 +196,25 @@ h1 {
 .links {
   display: flex;
   flex-wrap: wrap;
-  gap: 1.75rem;
-  margin-top: 2.5rem;
-  font-size: 0.9375rem;
+  gap: 1.125rem;
+  margin-top: 1.5rem;
+}
+
+/* Line-art icons: no fills, so one stroke colour suits both themes and the
+   hover transition on `a` carries the icon along with it. */
+.links a {
+  display: inline-flex;
+  padding: 0.25rem; /* keeps the tap target comfortable without visual weight */
+}
+
+.links svg {
+  width: 21px;
+  height: 21px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 a {
@@ -147,6 +238,17 @@ a:focus-visible {
   a { transition: none; }
 }
 
+@media (max-width: 720px) {
+  main {
+    gap: 2rem;
+    padding: 2rem;
+  }
+}
+
 @media (max-width: 480px) {
   h1 { font-size: 1.5rem; }
+
+  body { padding: 1.75rem 1rem; }
+
+  main { padding: 1.5rem; }
 }
