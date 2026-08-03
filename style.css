@@ -54,13 +54,16 @@ main {
   margin: auto;
 }
 
+/* Square, uncropped: the source is already a 1:1 headshot, so the full frame
+   shows with no circular mask cutting the corners. */
 .portrait {
   display: block;
-  width: 88px;
-  height: 88px;
-  margin: 0 0 1.25rem;
-  border-radius: 50%;
-  object-fit: cover;
+  width: clamp(180px, 45vw, 260px);
+  height: auto;
+  aspect-ratio: 1;
+  margin: 0 0 1.5rem;
+  border-radius: 8px;
+  object-fit: contain;
 }
 
 h1 {
