@@ -1,14 +1,16 @@
 :root {
   --bg: #fbfbfa;
   --text: #17171a;
-  --muted: #77776f;
+  --muted: #5f5f58; /* dark enough to clear WCAG AA over the coral */
+  --coral: 0.13;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --bg: #131316;
     --text: #eaeae6;
-    --muted: #92928a;
+    --muted: #a3a39b;
+    --coral: 0.16;
   }
 }
 
@@ -29,6 +31,19 @@ body {
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Collatz coral (see collatz.py). Its own layer so opacity can differ per
+   theme; the SVG's grey stroke reads correctly against both backgrounds. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: url(collatz.svg) center / cover no-repeat;
+  opacity: var(--coral);
+  transform: scaleX(-1); /* denser fronds to the right, calm behind the text */
+  pointer-events: none;
 }
 
 /* `margin: auto` centers on both axes without clipping overflow
