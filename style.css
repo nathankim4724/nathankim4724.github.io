@@ -33,17 +33,46 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Collatz coral (see collatz.py). Its own layer so opacity can differ per
-   theme; the SVG's grey stroke reads correctly against both backgrounds. */
-body::before {
-  content: "";
+/* Collatz coral, grown in the browser by collatz.js. Its own layer so opacity
+   can differ per theme; the grey stroke reads correctly against both. */
+#coral {
   position: fixed;
   inset: 0;
   z-index: -1;
-  background: url(collatz.svg) center / cover no-repeat;
+  width: 100%;
+  height: 100%;
   opacity: var(--coral);
   transform: scaleX(-1); /* denser fronds to the right, calm behind the text */
   pointer-events: none;
+}
+
+#coral path {
+  fill: none;
+  stroke: #808080; /* mid grey, so one colour suits both light and dark themes */
+  stroke-width: 1.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* The growth wave. collatz.js sets --len (the longest chain in this depth
+   bucket, in px) plus a delay and duration proportional to depth, so every
+   bucket draws at one shared speed and the tree opens outward from the root.
+   Dashing restarts at each subpath, so one <path> grows all of its chains.
+
+   The huge gap keeps the pattern's *second* dash away from the far end of a
+   full-length chain, and starting one pixel past --len keeps the first dash's
+   trailing edge off position 0. Both would otherwise land as zero-length
+   dashes, which round caps paint as visible dots. */
+@keyframes coral-grow {
+  from { stroke-dashoffset: calc(var(--len) + 1px); }
+}
+
+#coral path[style] {
+  stroke-dasharray: var(--len) 100000px;
+  stroke-dashoffset: 0;
+  animation-name: coral-grow;
+  animation-timing-function: linear;
+  animation-fill-mode: both;
 }
 
 /* `margin: auto` centers on both axes without clipping overflow
@@ -54,13 +83,13 @@ main {
   margin: auto;
 }
 
-/* Square, uncropped: the source is already a 1:1 headshot, so the full frame
-   shows with no circular mask cutting the corners. */
+/* Uncropped: nathan.jpg is the full-height original trimmed only on the sides,
+   widened to the right so the head sits centred. Nothing is masked away here. */
 .portrait {
   display: block;
-  width: clamp(180px, 45vw, 260px);
+  width: clamp(180px, 45vw, 250px);
   height: auto;
-  aspect-ratio: 1;
+  aspect-ratio: 1000 / 1228;
   margin: 0 0 1.5rem;
   border-radius: 8px;
   object-fit: contain;

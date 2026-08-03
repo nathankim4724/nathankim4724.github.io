@@ -14,12 +14,32 @@
 
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%231a1a18'/><text x='50' y='53' font-size='58' font-weight='600' font-family='system-ui,sans-serif' fill='%23ffffff' text-anchor='middle' dominant-baseline='central'>N</text></svg>">
   <link rel="stylesheet" href="style.css">
+  <script src="collatz.js" defer></script>
+
+  <noscript>
+    <style>
+      /* No JS to grow the tree, so fall back to the pre-rendered one. */
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        background: url(collatz.svg) center / cover no-repeat;
+        opacity: var(--coral);
+        transform: scaleX(-1);
+        pointer-events: none;
+      }
+    </style>
+  </noscript>
 </head>
 <body>
   <!-- The background is the reverse Collatz tree rooted at 1, drawn as turtle
-       graphics: halving steps turn one way, 3n+1 steps the other. See collatz.py -->
+       graphics: halving steps turn one way, 3n+1 steps the other. It is built
+       and grown in the browser by collatz.js. -->
+  <svg id="coral" aria-hidden="true"></svg>
+
   <main>
-    <img class="portrait" src="nathan.jpg" width="512" height="512" alt="Nathan Kim">
+    <img class="portrait" src="nathan.jpg" width="1000" height="1228" alt="Nathan Kim">
 
     <h1>Nathan Kim</h1>
 
