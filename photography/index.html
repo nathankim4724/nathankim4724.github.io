@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Photography — Nathan Kim</title>
+  <meta name="description" content="Photographs by Nathan Kim.">
+
+  <meta property="og:title" content="Photography — Nathan Kim">
+  <meta property="og:description" content="Photographs by Nathan Kim.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://nathankim.me/photography/">
+
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%231a1a18'/><text x='50' y='53' font-size='58' font-weight='600' font-family='system-ui,sans-serif' fill='%23ffffff' text-anchor='middle' dominant-baseline='central'>N</text></svg>">
+  <link rel="stylesheet" href="photography.css">
+</head>
+<body>
+  <!-- The back link is the first thing in the DOM and stays pinned to the top of
+       the viewport, so it is the first stop for a keyboard or screen-reader user
+       and never more than a glance away for everyone else. -->
+  <header class="bar">
+    <a class="back" href="../">
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M14.5 5.5L8 12l6.5 6.5"/>
+      </svg>
+      <span>Nathan Kim</span>
+    </a>
+  </header>
+
+  <main>
+    <h1>Photography</h1>
+    <p class="note">A few frames from surfing, skiing, hiking, and wherever else I've been carrying a camera.</p>
+
+    <!-- Filled by photography.js from the manifest in photos.js. -->
+    <div class="gallery" id="gallery"></div>
+
+    <p class="empty" id="empty" hidden>Photographs coming soon.</p>
+    <noscript><p class="empty">The gallery needs JavaScript to load the photographs.</p></noscript>
+  </main>
+
+  <!-- Lightbox. Inert and hidden until a photo is opened. -->
+  <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Photograph" hidden>
+    <img id="lightbox-img" alt="">
+    <p class="lightbox-caption" id="lightbox-caption"></p>
+    <button class="lightbox-btn close" id="lightbox-close" type="button" aria-label="Close">
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+    <button class="lightbox-btn prev" id="lightbox-prev" type="button" aria-label="Previous photograph">
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M14.5 5.5L8 12l6.5 6.5"/></svg>
+    </button>
+    <button class="lightbox-btn next" id="lightbox-next" type="button" aria-label="Next photograph">
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9.5 5.5L16 12l-6.5 6.5"/></svg>
+    </button>
+  </div>
+
+  <script src="photos.js"></script>
+  <script src="photography.js"></script>
+</body>
+</html>

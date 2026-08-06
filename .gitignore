@@ -2,4 +2,10 @@
 # The web copy is nathan.jpg (512px, metadata stripped).
 IMG_2047.JPG
 
+# Camera originals for the gallery — 45 MB, full EXIF, one of them GPS-tagged.
+# optimize_photography.py turns these into photography/photos/, which is what
+# the site serves and what gets committed.
+photography/originals/
+
 .DS_Store
+__pycache__/

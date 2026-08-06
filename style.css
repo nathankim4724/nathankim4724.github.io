@@ -147,6 +147,23 @@ h1 {
   margin-bottom: 0;
 }
 
+/* The one link inside the prose. It has to read as a link on its own -- colour
+   alone would not -- so it takes a hairline underline set clear of the
+   descenders, which fills in on hover rather than appearing from nothing. */
+.bio a {
+  color: var(--text);
+  text-decoration: underline;
+  text-decoration-color: rgba(23, 23, 26, 0.3);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+  transition: text-decoration-color 0.15s ease;
+}
+
+.bio a:hover,
+.bio a:focus-visible {
+  text-decoration-color: currentColor;
+}
+
 .links {
   display: flex;
   flex-wrap: wrap;

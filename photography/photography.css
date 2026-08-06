@@ -1,0 +1,276 @@
+/* The photography page is deliberately quieter than the front page: no coral in
+   the background, no card, no shadow. Paper, a rule, and the pictures. */
+
+:root {
+  color-scheme: light;
+  --bg: #ffffff;
+  --text: #17171a;
+  --muted: #6b6b66;
+  --rule: rgba(23, 23, 26, 0.09);
+  --gap: 1.5rem; /* one value drives both the column gutter and the row gap */
+}
+
+* { box-sizing: border-box; }
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-padding-top: 5rem; /* clears the pinned bar when a hash lands mid-page */
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  font-size: 15.5px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ---- the way back ------------------------------------------------------- */
+
+/* Sticky rather than fixed, so it takes up its own line at the top of the
+   document and the first photograph is never sliding underneath it on load. */
+.bar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: rgba(255, 255, 255, 0.86);
+  border-bottom: 1px solid transparent;
+  backdrop-filter: saturate(180%) blur(12px);
+  -webkit-backdrop-filter: saturate(180%) blur(12px);
+  transition: border-color 0.2s ease;
+}
+
+/* photography.js sets this once the page has scrolled, so the rule only appears
+   when there is something above to separate from. */
+.bar.scrolled { border-bottom-color: var(--rule); }
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  max-width: 68rem;
+  margin: 0 auto;
+  padding: 1rem 2rem;
+  color: var(--muted);
+  font-size: 0.94rem;
+  letter-spacing: -0.005em;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.back svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 0.15s ease;
+}
+
+.back:hover,
+.back:focus-visible { color: var(--text); }
+
+.back:hover svg { transform: translateX(-2px); }
+
+/* ---- the page ----------------------------------------------------------- */
+
+main {
+  max-width: 68rem;
+  margin: 0 auto;
+  padding: 2.5rem 2rem 6rem;
+}
+
+h1 {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.note {
+  max-width: 34rem;
+  margin: 0.6rem 0 0;
+  color: var(--muted);
+  text-wrap: pretty;
+}
+
+.empty {
+  margin: 3.5rem 0 0;
+  color: var(--muted);
+}
+
+/* ---- the gallery -------------------------------------------------------- */
+
+/* Columns rather than grid: a photograph keeps its own proportions and the
+   column simply stacks whatever comes next, so portrait and landscape frames
+   sit together without either being cropped or boxed. Reading order runs down
+   each column, which for a gallery is the order the eye takes anyway. */
+.gallery {
+  margin-top: 2.75rem;
+  column-count: 3;
+  column-gap: var(--gap);
+}
+
+/* Three columns need room to stay generous; below that, two. */
+@media (max-width: 1000px) { .gallery { column-count: 2; } }
+@media (max-width: 560px) { .gallery { column-count: 1; } }
+
+.gallery figure {
+  /* `inline-block` keeps a figure from being split across a column break. */
+  display: inline-block;
+  width: 100%;
+  margin: 0 0 var(--gap);
+}
+
+.gallery button {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  cursor: zoom-in;
+}
+
+.gallery img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 3px;
+  background: #f4f4f2; /* the space the picture will occupy, before it arrives */
+  /* The ratio comes from the manifest, so the column is laid out at its final
+     height on the first frame and nothing shifts as photographs load. A file
+     whose header the build script could not read falls back to `auto`: it
+     settles into place on load rather than being cropped to a guess. */
+  aspect-ratio: var(--ratio, auto);
+  opacity: 0;
+  transition: opacity 0.5s ease, filter 0.35s ease;
+}
+
+.gallery img.loaded { opacity: 1; }
+
+.gallery button:hover img { filter: brightness(1.06); }
+
+.gallery button:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 4px;
+  border-radius: 3px;
+}
+
+figcaption {
+  margin-top: 0.55rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+  letter-spacing: 0.005em;
+}
+
+/* ---- lightbox ----------------------------------------------------------- */
+
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: clamp(1rem, 4vw, 3.5rem);
+  background: rgba(250, 250, 249, 0.97);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  animation: fade 0.2s ease;
+}
+
+.lightbox[hidden] { display: none; }
+
+@keyframes fade { from { opacity: 0; } }
+
+.lightbox img {
+  max-width: 100%;
+  /* Leaves room for the caption line under the frame. */
+  max-height: calc(100% - 2.5rem);
+  object-fit: contain;
+  border-radius: 3px;
+  box-shadow: 0 24px 60px -30px rgba(23, 23, 26, 0.45);
+}
+
+.lightbox-caption {
+  margin: 0;
+  min-height: 1.2em;
+  color: var(--muted);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.lightbox-btn {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px; /* a comfortable tap target at every size */
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.lightbox-btn svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.lightbox-btn:hover,
+.lightbox-btn:focus-visible {
+  color: var(--text);
+  background: rgba(23, 23, 26, 0.06);
+}
+
+.lightbox-btn:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 2px;
+}
+
+.close { top: clamp(0.75rem, 2vw, 1.5rem); right: clamp(0.75rem, 2vw, 1.5rem); }
+.prev  { left: clamp(0.4rem, 2vw, 1.5rem); top: 50%; transform: translateY(-50%); }
+.next  { right: clamp(0.4rem, 2vw, 1.5rem); top: 50%; transform: translateY(-50%); }
+
+/* One photograph: nothing to step to. */
+.lightbox.single .prev,
+.lightbox.single .next { display: none; }
+
+body.lightbox-open { overflow: hidden; }
+
+@media (max-width: 720px) {
+  .back { padding: 0.9rem 1.25rem; }
+  main { padding: 2rem 1.25rem 4rem; }
+  :root { --gap: 1rem; }
+}
+
+@media (max-width: 480px) {
+  h1 { font-size: 1.5rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
