@@ -7,7 +7,12 @@
   --text: #17171a;
   --muted: #6b6b66;
   --rule: rgba(23, 23, 26, 0.09);
-  --gap: 1.5rem; /* one value drives both the column gutter and the row gap */
+  --gap: 1.25rem; /* one value drives both the column gutter and the row gap */
+  /* The pictures are the page, so the measure is wide and the side margin is
+     only as much as it takes to keep the frames off the edge of the screen.
+     The bar and the gallery share both values, so their left edges line up. */
+  --page: 108rem;
+  --pad: clamp(1.25rem, 3.5vw, 3.5rem);
 }
 
 * { box-sizing: border-box; }
@@ -47,13 +52,19 @@ body {
    when there is something above to separate from. */
 .bar.scrolled { border-bottom-color: var(--rule); }
 
+/* The link itself is only as wide as its text -- the wrapper is what carries
+   the page measure, so a click out in the empty half of the bar does nothing. */
+.bar-inner {
+  max-width: var(--page);
+  margin: 0 auto;
+  padding: 0 var(--pad);
+}
+
 .back {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  max-width: 68rem;
-  margin: 0 auto;
-  padding: 1rem 2rem;
+  padding: 1rem 0;
   color: var(--muted);
   font-size: 0.94rem;
   letter-spacing: -0.005em;
@@ -80,9 +91,9 @@ body {
 /* ---- the page ----------------------------------------------------------- */
 
 main {
-  max-width: 68rem;
+  max-width: var(--page);
   margin: 0 auto;
-  padding: 2.5rem 2rem 6rem;
+  padding: 2.5rem var(--pad) 6rem;
 }
 
 h1 {
@@ -106,25 +117,40 @@ h1 {
 
 /* ---- the gallery -------------------------------------------------------- */
 
-/* Columns rather than grid: a photograph keeps its own proportions and the
-   column simply stacks whatever comes next, so portrait and landscape frames
-   sit together without either being cropped or boxed. Reading order runs down
-   each column, which for a gallery is the order the eye takes anyway. */
+/* Justified rows, not columns. Fixed columns force every frame to one width,
+   which is why a landscape photograph used to end up a third the height of the
+   portrait beside it. Here photography.js groups the frames into rows and each
+   figure grows in proportion to its own aspect ratio (--r), so a row's frames
+   come out exactly as tall as one another and a wide photograph is given the
+   width it was shot at. Every row runs the full measure and holds at least two
+   frames, one of each shape wherever the gallery has both to give; what varies
+   is how many, re-rolled per row against a jittered target, so the rhythm of
+   the page never settles into a grid. A phone is the exception: at that width a
+   pair would be a contact sheet, so each photograph takes the column alone.
+
+   Widths being proportional means a row rescales continuously as the window
+   moves; the script only has to regroup when the change is big enough to
+   change how many frames fit. */
 .gallery {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
   margin-top: 2.75rem;
-  column-count: 3;
-  column-gap: var(--gap);
 }
 
-/* Three columns need room to stay generous; below that, two. */
-@media (max-width: 1000px) { .gallery { column-count: 2; } }
-@media (max-width: 560px) { .gallery { column-count: 1; } }
+/* A row fills the column, which is the whole point of it. The only exception
+   photography.js makes is a row it cannot fill without towering over the page,
+   and there it sets `width` itself. */
+.gallery .row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--gap);
+}
 
 .gallery figure {
-  /* `inline-block` keeps a figure from being split across a column break. */
-  display: inline-block;
-  width: 100%;
-  margin: 0 0 var(--gap);
+  flex: var(--r, 1) 1 0;
+  min-width: 0;
+  margin: 0;
 }
 
 .gallery button {
@@ -257,9 +283,9 @@ figcaption {
 body.lightbox-open { overflow: hidden; }
 
 @media (max-width: 720px) {
-  .back { padding: 0.9rem 1.25rem; }
-  main { padding: 2rem 1.25rem 4rem; }
-  :root { --gap: 1rem; }
+  .back { padding: 0.9rem 0; }
+  main { padding-top: 2rem; padding-bottom: 4rem; }
+  :root { --gap: 0.75rem; }
 }
 
 @media (max-width: 480px) {

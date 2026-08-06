@@ -147,20 +147,30 @@ h1 {
   margin-bottom: 0;
 }
 
-/* The one link inside the prose. It has to read as a link on its own -- colour
-   alone would not -- so it takes a hairline underline set clear of the
-   descenders, which fills in on hover rather than appearing from nothing. */
-.bio a {
-  color: var(--text);
+/* The gallery link. Fixed to the top-right of the viewport, clear of the card,
+   so it sits where a site's navigation is looked for. It has to read as a link
+   on its own -- colour alone would not -- so it takes a hairline underline set
+   clear of the descenders, which fills in on hover rather than appearing from
+   nothing. */
+.gallery-link {
+  position: fixed;
+  top: 1.5rem;
+  right: 1.75rem;
+  z-index: 2;
+  padding: 0.25rem;
+  color: var(--muted);
+  font-size: 0.94rem;
+  letter-spacing: -0.005em;
   text-decoration: underline;
-  text-decoration-color: rgba(23, 23, 26, 0.3);
+  text-decoration-color: rgba(23, 23, 26, 0.28);
   text-decoration-thickness: 1px;
-  text-underline-offset: 0.18em;
-  transition: text-decoration-color 0.15s ease;
+  text-underline-offset: 0.2em;
+  transition: color 0.15s ease, text-decoration-color 0.15s ease;
 }
 
-.bio a:hover,
-.bio a:focus-visible {
+.gallery-link:hover,
+.gallery-link:focus-visible {
+  color: var(--text);
   text-decoration-color: currentColor;
 }
 
@@ -206,7 +216,7 @@ a:focus-visible {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  a { transition: none; }
+  a, .gallery-link { transition: none; }
 }
 
 @media (max-width: 720px) {
@@ -219,7 +229,13 @@ a:focus-visible {
 @media (max-width: 480px) {
   h1 { font-size: 1.5rem; }
 
-  body { padding: 1.75rem 1rem; }
+  /* Extra headroom so the pinned link never lands on the card's corner. */
+  body { padding: 3rem 1rem 1.75rem; }
 
   main { padding: 1.5rem; }
+
+  .gallery-link {
+    top: 0.9rem;
+    right: 0.9rem;
+  }
 }
