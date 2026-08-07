@@ -42,7 +42,13 @@
 
   <!-- Lightbox. Inert and hidden until a photo is opened. -->
   <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Photograph" hidden>
-    <img id="lightbox-img" alt="">
+    <!-- The sources are filled in by photography.js, which works out how large
+         the photograph is about to be drawn and asks for that size. -->
+    <picture>
+      <source id="lightbox-avif" type="image/avif">
+      <source id="lightbox-webp" type="image/webp">
+      <img id="lightbox-img" alt="">
+    </picture>
     <p class="lightbox-caption" id="lightbox-caption"></p>
     <button class="lightbox-btn close" id="lightbox-close" type="button" aria-label="Close">
       <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6L6 18"/></svg>

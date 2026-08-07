@@ -164,6 +164,15 @@ h1 {
   cursor: zoom-in;
 }
 
+/* Each frame is a <picture> offering AVIF, WebP and JPEG so the browser can take
+   the format and the size it wants. `display: contents` keeps it out of the way
+   entirely: the <img> goes on being laid out as the button's own child, so every
+   rule below still measures against the frame rather than against a wrapper. */
+.gallery picture,
+.lightbox picture {
+  display: contents;
+}
+
 .gallery img {
   display: block;
   width: 100%;
