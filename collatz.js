@@ -82,6 +82,17 @@
   const GAUGE = 60;
   const GAUGE_MIN = 0.85, GAUGE_MAX = 1.7;
 
+  /* The trajectory pulse: every several seconds, one number's Collatz sequence
+   * plays out -- a short bright segment lights up at a random on-screen tip and
+   * runs down the branch to the root, the fall to 1 the conjecture promises.
+   * PULSE_EDGE_MS is close to the growth wave's pace (GROW_MS over a span of
+   * ~20 edges), so the pulse moves like the tree grew. */
+  const PULSE_EDGES = 2.5;                        // bright segment, tree units
+  const PULSE_EDGE_MS = 90;                       // travel time per edge
+  const PULSE_WIDTH = 1.5;                        // px at GAUGE
+  const PULSE_ALPHA = 0.55;
+  const PULSE_GAP_MIN = 6000, PULSE_GAP_MAX = 12000;  // rest between pulses
+
   const svg = document.getElementById('coral');
   if (!svg) return;
 
@@ -89,7 +100,7 @@
   function build() {
     const rad = Math.PI / 180;
     const even = EVEN_TURN * rad, odd = ODD_TURN * rad;
-    const xs = [0], ys = [0], kids = [[]], depth = [0];
+    const xs = [0], ys = [0], kids = [[]], depth = [0], parent = [-1];
     const stack = [[1, 0, START_HEADING * rad, 0]];
     while (stack.length) {
       const [m, i, heading, d] = stack.pop();
@@ -107,11 +118,12 @@
         ys.push(ys[i] + Math.sin(h));
         kids.push([]);
         depth.push(d + 1);
+        parent.push(i);
         kids[i].push(j);
         stack.push([value, j, h, d + 1]);
       }
     }
-    return { xs, ys, kids, depth };
+    return { xs, ys, kids, depth, parent };
   }
 
   /* Collapse runs of single-child nodes into polylines, so the DOM stays small. */
@@ -153,7 +165,7 @@
     return out;
   }
 
-  const { xs, ys, kids, depth } = build();
+  const { xs, ys, kids, depth, parent } = build();
   const polys = slice(chains(kids), depth);
 
   let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
@@ -183,6 +195,10 @@
   }
   const order = [...buckets.keys()].sort((a, b) => a - b);
 
+  /* The screen transform of the last draw, kept so the pulse can project tree
+   * coordinates without re-deriving the fit. */
+  let view;
+
   /* Lay the tree over the viewport: scale until it covers both axes the way
    * `background-size: cover` would, apply ZOOM, then pin the anchor to centre. */
   function draw(animate) {
@@ -193,6 +209,7 @@
     const ox = w / 2 - (x0 + bw * ANCHOR_X) * s;
     const oy = h / 2 + (y1 - bh * ANCHOR_Y) * s;  // y flipped: SVG's axis grows down
     const gauge = Math.min(GAUGE_MAX, Math.max(GAUGE_MIN, Math.sqrt(s / GAUGE)));
+    view = { s, ox, oy, gauge, w, h };
 
     /* The root is off-screen, so a wave clocked from it spends its first stretch
      * drawing nothing anyone can see -- about 0.8s of an empty page at 1440x900.
@@ -239,7 +256,9 @@
     svg.innerHTML = `<g class="strands">${out}</g>`;
   }
 
-  draw(!matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const motion = matchMedia('(prefers-reduced-motion: reduce)');
+
+  draw(!motion.matches);
 
   /* Re-fit on resize. The tree itself is scale-invariant, so only the transform
    * is recomputed -- and the growth never replays, it has already been seen. */
@@ -250,5 +269,69 @@
     lastH = innerHeight;
     clearTimeout(timer);
     timer = setTimeout(() => draw(false), 150);
+  });
+
+  /* The trajectory pulse. Pick a tip that is on screen, lay a single path along
+   * its route to the root, and slide one dash down it -- the same trick the
+   * growth wave uses, run in reverse. The dash pattern starts entirely before
+   * the path and ends entirely past it, so the pulse grows in at the tip and
+   * drains out at the root end with no opacity keyframes.
+   *
+   * Scheduling is a timer chain rather than animationend, so a resize redraw
+   * that wipes the svg (pulse included) cannot kill the cycle. Tips are all at
+   * MAX_DEPTH -- every node has a 2m child, so nothing shallower is a leaf --
+   * which also makes every route the same length: the tip's depth in edges. */
+  let pulseTimer;
+
+  function launchPulse() {
+    schedulePulse();
+    if (document.hidden || !view) return;
+    const { s, ox, oy, gauge, w, h } = view;
+    const tips = [];
+    for (let i = 0; i < xs.length; i++) {
+      if (depth[i] !== MAX_DEPTH) continue;
+      const px = xs[i] * s + ox, py = oy - ys[i] * s;
+      if (px >= 0 && py >= 0 && px <= w && py <= h) tips.push(i);
+    }
+    const strands = svg.querySelector('.strands');
+    if (!tips.length || !strands) return;
+
+    let i = tips[(Math.random() * tips.length) | 0];
+    const edges = depth[i];
+    const pts = [];
+    for (; i !== -1; i = parent[i]) {
+      pts.push(`${(xs[i] * s + ox).toFixed(1)} ${(oy - ys[i] * s).toFixed(1)}`);
+    }
+    // Every edge is one unit, so the route's length is just its edge count.
+    strands.insertAdjacentHTML('beforeend',
+      `<path class="pulse" d="M${pts.join(' ')}"` +
+      ` stroke-width="${(PULSE_WIDTH * gauge).toFixed(2)}"` +
+      ` stroke-opacity="${PULSE_ALPHA}"` +
+      ` style="--path-len:${(edges * s).toFixed(1)}px;` +
+      `--pulse-len:${(PULSE_EDGES * s).toFixed(1)}px;` +
+      `animation-duration:${Math.round(edges * PULSE_EDGE_MS)}ms"/>`);
+    const pulse = strands.lastElementChild;
+    pulse.addEventListener('animationend', () => pulse.remove());
+  }
+
+  function schedulePulse() {
+    clearTimeout(pulseTimer);
+    pulseTimer = setTimeout(launchPulse,
+      PULSE_GAP_MIN + Math.random() * (PULSE_GAP_MAX - PULSE_GAP_MIN));
+  }
+
+  const pulseOk = () => !motion.matches && !document.hidden;
+
+  if (pulseOk()) {
+    // Let the growth wave finish and the page settle before the first pulse.
+    pulseTimer = setTimeout(launchPulse, GROW_MS + PULSE_GAP_MIN);
+  }
+  // No pulses while the tab is hidden or motion is unwelcome; timers stop
+  // entirely rather than early-returning forever.
+  motion.addEventListener('change', () => {
+    if (pulseOk()) schedulePulse(); else clearTimeout(pulseTimer);
+  });
+  document.addEventListener('visibilitychange', () => {
+    if (pulseOk()) schedulePulse(); else clearTimeout(pulseTimer);
   });
 })();

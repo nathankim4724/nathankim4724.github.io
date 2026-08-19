@@ -81,6 +81,29 @@ body {
   animation-fill-mode: both;
 }
 
+/* The trajectory pulse: one number's route back to 1, drawn by collatz.js as a
+   tip-to-root polyline with a short dash sliding down it. The dash pattern
+   starts entirely before the path (offset --pulse-len) and finishes entirely
+   past it (offset -(--path-len)), so the pulse grows in at the tip and drains
+   out at the far end without opacity keyframes; the extra pixels keep the round
+   caps off both boundaries. The gap outruns path + pulse, so the pattern's
+   second dash never enters. This rule ties with path[style] above on
+   specificity and must stay after it -- the pulse carries an inline style, so
+   the earlier rule would otherwise hand it the growth animation. Round caps are
+   safe here: nothing abuts a pulse, so caps cannot bead. */
+@keyframes coral-pulse {
+  from { stroke-dashoffset: calc(var(--pulse-len) + 1px); }
+  to   { stroke-dashoffset: calc(-1px - var(--path-len)); }
+}
+
+#coral path.pulse {
+  stroke-dasharray: var(--pulse-len) calc(var(--path-len) + var(--pulse-len) + 2px);
+  stroke-linecap: round;
+  animation-name: coral-pulse;
+  animation-timing-function: linear;
+  animation-fill-mode: both;
+}
+
 /* `margin: auto` centers on both axes without clipping overflow
    the way `align-items: center` would on short viewports. */
 /* Portrait beside the text on wide screens, stacked below 720px. The card is
