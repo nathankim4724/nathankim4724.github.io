@@ -143,6 +143,20 @@ h1 {
   text-wrap: pretty;
 }
 
+/* In-prose links: keep the body text color but mark them with a quiet
+   underline, since the global anchor style hides underlines for icons. */
+.bio a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--muted);
+  text-underline-offset: 3px;
+}
+
+.bio a:hover,
+.bio a:focus-visible {
+  text-decoration-color: currentColor;
+}
+
 .bio p:last-child {
   margin-bottom: 0;
 }
