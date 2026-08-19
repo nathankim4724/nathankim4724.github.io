@@ -91,7 +91,7 @@
   const PULSE_EDGE_MS = 90;                       // travel time per edge
   const PULSE_WIDTH = 1.5;                        // px at GAUGE
   const PULSE_ALPHA = 0.55;
-  const PULSE_GAP_MIN = 6000, PULSE_GAP_MAX = 12000;  // rest between pulses
+  const PULSE_GAP_MIN = 2000, PULSE_GAP_MAX = 5000;   // rest between pulses
 
   const svg = document.getElementById('coral');
   if (!svg) return;
