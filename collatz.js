@@ -73,6 +73,13 @@
   const NEAR_ALPHA = 0.62, FAR_ALPHA = 0.10;
   const RAMP = 1.6;
 
+  /* Edges are drawn as Catmull-Rom cubics rather than chords, so the curves run
+   * slightly longer than the edge counts they are clocked by -- about theta^2/24
+   * per edge, under a tenth of a percent at 8 degrees. Every dash length derived
+   * from an edge count carries this cushion; without it the last sliver of the
+   * longest chain in a bucket would sit permanently in the dash gap. */
+  const CURVE_PAD = 1.02;
+
   /* The widths above are drawn for a tree scaled to ~GAUGE px per edge, which is
    * what nearly every laptop and 1080p desktop lands on, and what MIN_SCALE holds
    * everything smaller near. A 3840x2160 viewport gets 3.1x that, so the strokes
@@ -168,6 +175,34 @@
   const { xs, ys, kids, depth, parent } = build();
   const polys = slice(chains(kids), depth);
 
+  /* A route -- consecutive tree nodes, in either direction -- as one Catmull-Rom
+   * cubic per edge, passing through every node. The tangent at each node comes
+   * from its drawn-geometry neighbours (parent on one side, first child on the
+   * other) rather than from the route's own ends, which buys two things: pieces
+   * cut at the band boundaries meet with matching tangents instead of kinking,
+   * and the pulse lands exactly on the strands it retraces, because Catmull-Rom
+   * is symmetric under reversal. Where there is no neighbour -- the root, a tip
+   * -- the tangent clamps to the chord. A branch's odd child is not its parent's
+   * continuation (that is the even child), so the odd corner keeps a crease,
+   * which is where the drawing ought to have one. */
+  function curveD(route, s, ox, oy) {
+    const X = i => xs[i] * s + ox, Y = i => oy - ys[i] * s;
+    // The neighbour of i on the far side of j, following the drawn geometry.
+    const beyond = (i, j) => (j === parent[i] ? kids[i][0] : parent[i]);
+    let d = `M${X(route[0]).toFixed(1)} ${Y(route[0]).toFixed(1)}`;
+    for (let k = 0; k + 1 < route.length; k++) {
+      const a = route[k], b = route[k + 1];
+      const ax = X(a), ay = Y(a), bx = X(b), by = Y(b);
+      const pre = beyond(a, b), post = beyond(b, a);
+      const p0x = pre >= 0 ? X(pre) : ax, p0y = pre >= 0 ? Y(pre) : ay;
+      const p3x = post >= 0 ? X(post) : bx, p3y = post >= 0 ? Y(post) : by;
+      d += `C${(ax + (bx - p0x) / 6).toFixed(1)} ${(ay + (by - p0y) / 6).toFixed(1)}` +
+           ` ${(bx - (p3x - ax) / 6).toFixed(1)} ${(by - (p3y - ay) / 6).toFixed(1)}` +
+           ` ${bx.toFixed(1)} ${by.toFixed(1)}`;
+    }
+    return d;
+  }
+
   let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
   for (let i = 0; i < xs.length; i++) {
     if (xs[i] < x0) x0 = xs[i];
@@ -234,15 +269,11 @@
       const f = BANDS > 1 ? Math.pow(band(d) / (BANDS - 1), RAMP) : 0;
       const width = (NEAR_WIDTH + (FAR_WIDTH - NEAR_WIDTH) * f) * gauge;
       const alpha = NEAR_ALPHA + (FAR_ALPHA - NEAR_ALPHA) * f;
-      const path = b.polys.map(pts =>
-        'M' + pts.map(i =>
-          `${(xs[i] * s + ox).toFixed(1)} ${(oy - ys[i] * s).toFixed(1)}`
-        ).join(' ')
-      ).join('');
+      const path = b.polys.map(pts => curveD(pts, s, ox, oy)).join('');
       // Delay and duration are pure depth fractions -- the scale cancels out,
       // since both the arc length and the wave's speed are proportional to s.
       const style = animate
-        ? ` style="--len:${(b.edges * s).toFixed(1)}px;` +
+        ? ` style="--len:${(b.edges * s * CURVE_PAD).toFixed(1)}px;` +
           // Buckets that start before the wave enters frame get a negative delay,
           // which starts them already part-drawn -- so a piece that straddles the
           // edge of the viewport arrives on the wave rather than ahead of it.
@@ -298,16 +329,14 @@
 
     let i = tips[(Math.random() * tips.length) | 0];
     const edges = depth[i];
-    const pts = [];
-    for (; i !== -1; i = parent[i]) {
-      pts.push(`${(xs[i] * s + ox).toFixed(1)} ${(oy - ys[i] * s).toFixed(1)}`);
-    }
+    const route = [];
+    for (; i !== -1; i = parent[i]) route.push(i);
     // Every edge is one unit, so the route's length is just its edge count.
     strands.insertAdjacentHTML('beforeend',
-      `<path class="pulse" d="M${pts.join(' ')}"` +
+      `<path class="pulse" d="${curveD(route, s, ox, oy)}"` +
       ` stroke-width="${(PULSE_WIDTH * gauge).toFixed(2)}"` +
       ` stroke-opacity="${PULSE_ALPHA}"` +
-      ` style="--path-len:${(edges * s).toFixed(1)}px;` +
+      ` style="--path-len:${(edges * s * CURVE_PAD).toFixed(1)}px;` +
       `--pulse-len:${(PULSE_EDGES * s).toFixed(1)}px;` +
       `animation-duration:${Math.round(edges * PULSE_EDGE_MS)}ms"/>`);
     const pulse = strands.lastElementChild;

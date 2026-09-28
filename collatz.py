@@ -47,7 +47,7 @@ FRAME_W, FRAME_H = 1600, 1000   # the crop this is rendered for, at 16:10
 def build():
     """Grow the reverse Collatz tree, returning coords, adjacency and depths."""
     even, odd = math.radians(EVEN_TURN), math.radians(ODD_TURN)
-    xs, ys, kids, depth = [0.0], [0.0], [[]], [0]
+    xs, ys, kids, depth, parent = [0.0], [0.0], [[]], [0], [-1]
     stack = [(1, 0, math.radians(START_HEADING), 0)]
     while stack:
         m, i, heading, d = stack.pop()
@@ -64,9 +64,10 @@ def build():
             ys.append(ys[i] + math.sin(h))
             kids.append([])
             depth.append(d + 1)
+            parent.append(i)
             kids[i].append(len(xs) - 1)
             stack.append((value, len(xs) - 1, h, d + 1))
-    return xs, ys, kids, depth
+    return xs, ys, kids, depth, parent
 
 
 def chains(kids):
@@ -109,7 +110,40 @@ def slice_bands(polys, depth):
     return out
 
 
-def render(xs, ys, kids, depth):
+def curve_d(route, xs, ys, parent, kids, s, ox, oy):
+    """One piece as Catmull-Rom cubics through its nodes, mirroring curveD in
+    collatz.js: the tangent at each node comes from its drawn-geometry
+    neighbours (parent on one side, first child on the other), so pieces cut at
+    the band boundaries meet with matching tangents instead of kinking. Ends
+    without a neighbour (the root, a tip) clamp the tangent to the chord."""
+    def X(i):
+        return xs[i] * s + ox
+
+    def Y(i):
+        return oy - ys[i] * s
+
+    def beyond(i, j):
+        """The neighbour of i on the far side of j, following the drawn geometry."""
+        if j == parent[i]:
+            return kids[i][0] if kids[i] else -1
+        return parent[i]
+
+    d = [f"M{X(route[0]):.1f} {Y(route[0]):.1f}"]
+    for k in range(len(route) - 1):
+        a, b = route[k], route[k + 1]
+        ax, ay, bx, by = X(a), Y(a), X(b), Y(b)
+        pre, post = beyond(a, b), beyond(b, a)
+        p0x, p0y = (X(pre), Y(pre)) if pre >= 0 else (ax, ay)
+        p3x, p3y = (X(post), Y(post)) if post >= 0 else (bx, by)
+        d.append(
+            f"C{ax + (bx - p0x) / 6:.1f} {ay + (by - p0y) / 6:.1f}"
+            f" {bx - (p3x - ax) / 6:.1f} {by - (p3y - ay) / 6:.1f}"
+            f" {bx:.1f} {by:.1f}"
+        )
+    return "".join(d)
+
+
+def render(xs, ys, kids, depth, parent):
     polys = slice_bands(chains(kids), depth)
     x0, x1, y0, y1 = min(xs), max(xs), min(ys), max(ys)
     bw, bh = x1 - x0, y1 - y0
@@ -131,10 +165,7 @@ def render(xs, ys, kids, depth):
         f = (b / (BANDS - 1)) ** RAMP if BANDS > 1 else 0.0
         width = NEAR_WIDTH + (FAR_WIDTH - NEAR_WIDTH) * f
         alpha = NEAR_ALPHA + (FAR_ALPHA - NEAR_ALPHA) * f
-        d = "".join(
-            "M" + " ".join(f"{xs[i]*s+ox:.1f} {oy-ys[i]*s:.1f}" for i in pts)
-            for pts in group
-        )
+        d = "".join(curve_d(pts, xs, ys, parent, kids, s, ox, oy) for pts in group)
         paths.append(
             f'<path d="{d}" stroke-width="{width:.2f}" stroke-opacity="{alpha:.3f}"/>'
         )

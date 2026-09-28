@@ -82,7 +82,7 @@ body {
 }
 
 /* The trajectory pulse: one number's route back to 1, drawn by collatz.js as a
-   tip-to-root polyline with a short dash sliding down it. The dash pattern
+   tip-to-root curve with a short dash sliding down it. The dash pattern
    starts entirely before the path (offset --pulse-len) and finishes entirely
    past it (offset -(--path-len)), so the pulse grows in at the tip and drains
    out at the far end without opacity keyframes; the extra pixels keep the round
