@@ -120,6 +120,11 @@ colour, and `--coral` is a master dial over the whole ramp — the drawing alrea
 grades itself, so it multiplies rather than sets a level. The growth is skipped
 under `prefers-reduced-motion`, which renders the finished tree immediately.
 
+The `3n+1` button in the bottom-right corner turns the drawing off and on. Off
+fades it out and stops the pulses; on regrows it. The choice is kept in
+`localStorage` under `coral`, so it holds across visits. The button is hidden
+until `collatz.js` runs, so without JavaScript it never appears.
+
 ## The card
 
 `main` is an opaque white block over the drawing, so the portrait and the text sit

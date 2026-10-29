@@ -289,17 +289,27 @@
 
   const motion = matchMedia('(prefers-reduced-motion: reduce)');
 
-  draw(!motion.matches);
+  /* The 3n+1 toggle. The choice is remembered, so a visitor who switched the
+   * drawing off is not shown it growing again on every visit. localStorage can
+   * throw (Safari's private mode used to), and then the toggle simply forgets. */
+  const STORE = 'coral';
+  const toggle = document.querySelector('.coral-toggle');
+  let on = true;
+  try { on = localStorage.getItem(STORE) !== 'off'; } catch (e) {}
+  document.documentElement.classList.toggle('coral-off', !on);
+
+  if (on) draw(!motion.matches);
 
   /* Re-fit on resize. The tree itself is scale-invariant, so only the transform
-   * is recomputed -- and the growth never replays, it has already been seen. */
+   * is recomputed -- and the growth never replays, it has already been seen.
+   * While the drawing is off there is nothing to fit; turning it on redraws. */
   let timer, lastW = innerWidth, lastH = innerHeight;
   addEventListener('resize', () => {
     if (innerWidth === lastW && innerHeight === lastH) return;
     lastW = innerWidth;
     lastH = innerHeight;
     clearTimeout(timer);
-    timer = setTimeout(() => draw(false), 150);
+    timer = setTimeout(() => { if (on) draw(false); }, 150);
   });
 
   /* The trajectory pulse. Pick a tip that is on screen, lay a single path along
@@ -349,18 +359,36 @@
       PULSE_GAP_MIN + Math.random() * (PULSE_GAP_MAX - PULSE_GAP_MIN));
   }
 
-  const pulseOk = () => !motion.matches && !document.hidden;
+  const pulseOk = () => on && !motion.matches && !document.hidden;
 
-  if (pulseOk()) {
-    // Let the growth wave finish and the page settle before the first pulse.
-    pulseTimer = setTimeout(launchPulse, GROW_MS + PULSE_GAP_MIN);
-  }
-  // No pulses while the tab is hidden or motion is unwelcome; timers stop
-  // entirely rather than early-returning forever.
+  // Let the growth wave finish and the page settle before the first pulse.
+  const firstPulse = () => {
+    clearTimeout(pulseTimer);
+    if (pulseOk()) pulseTimer = setTimeout(launchPulse, GROW_MS + PULSE_GAP_MIN);
+  };
+  firstPulse();
+  // No pulses while the tab is hidden, motion is unwelcome or the drawing is
+  // off; timers stop entirely rather than early-returning forever.
   motion.addEventListener('change', () => {
     if (pulseOk()) schedulePulse(); else clearTimeout(pulseTimer);
   });
   document.addEventListener('visibilitychange', () => {
     if (pulseOk()) schedulePulse(); else clearTimeout(pulseTimer);
   });
+
+  /* Off fades the drawing out (style.css) and stops the pulses. On regrows it
+   * from scratch -- the redraw replaces every path, so the growth wave replays
+   * from an empty page rather than snapping back in. */
+  if (toggle) {
+    toggle.setAttribute('aria-pressed', on);
+    toggle.hidden = false;
+    toggle.addEventListener('click', () => {
+      on = !on;
+      try { localStorage.setItem(STORE, on ? 'on' : 'off'); } catch (e) {}
+      document.documentElement.classList.toggle('coral-off', !on);
+      toggle.setAttribute('aria-pressed', on);
+      if (on) draw(!motion.matches);
+      firstPulse();
+    });
+  }
 })();

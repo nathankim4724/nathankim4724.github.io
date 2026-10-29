@@ -15,6 +15,7 @@
 html { -webkit-text-size-adjust: 100%; }
 
 body {
+  position: relative; /* the containing block for .coral-toggle */
   display: flex;
   min-height: 100vh;
   min-height: 100svh;
@@ -39,7 +40,13 @@ body {
   height: 100%;
   transform: scaleX(-1); /* strands sweep up and to the right, away from the text */
   pointer-events: none;
+  transition: opacity 0.4s ease;
 }
+
+/* Switched off by the 3n+1 toggle: a fade on the way out rather than a cut. On
+   the way back in, collatz.js regrows the tree from nothing, so the fade there
+   is lost under the growth. */
+.coral-off #coral { opacity: 0; }
 
 #coral .strands { opacity: var(--coral); }
 
@@ -209,6 +216,44 @@ h1 {
   text-decoration-color: currentColor;
 }
 
+/* The background toggle, in the opposite corner from the gallery link and set
+   to match it. It is a button, not a link, so no underline; off is shown by
+   striking the label through, which reads without relying on colour.
+
+   Anchored to the page rather than the viewport. Where the page fits the
+   screen the two are the same corner; where it does not -- every phone -- a
+   fixed button would sit over the card's text, and this one waits below it. */
+.coral-toggle {
+  position: absolute;
+  right: 1.75rem;
+  bottom: 1.5rem;
+  z-index: 2;
+  padding: 0.25rem;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.94rem;
+  letter-spacing: -0.005em;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.coral-toggle:hover,
+.coral-toggle:focus-visible {
+  color: var(--text);
+}
+
+.coral-toggle:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+}
+
+.coral-toggle[aria-pressed="false"] {
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+}
+
 .links {
   display: flex;
   flex-wrap: wrap;
@@ -250,7 +295,7 @@ a:focus-visible {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  a, .gallery-link { transition: none; }
+  a, .gallery-link, .coral-toggle, #coral { transition: none; }
 }
 
 @media (max-width: 720px) {
@@ -263,13 +308,19 @@ a:focus-visible {
 @media (max-width: 480px) {
   h1 { font-size: 1.5rem; }
 
-  /* Extra headroom so the pinned link never lands on the card's corner. */
-  body { padding: 3rem 1rem 1.75rem; }
+  /* Extra headroom and footroom so the pinned link and toggle never land on
+     the card's corners. */
+  body { padding: 3rem 1rem; }
 
   main { padding: 1.5rem; }
 
   .gallery-link {
     top: 0.9rem;
     right: 0.9rem;
+  }
+
+  .coral-toggle {
+    right: 0.9rem;
+    bottom: 0.9rem;
   }
 }
