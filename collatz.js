@@ -289,13 +289,15 @@
 
   const motion = matchMedia('(prefers-reduced-motion: reduce)');
 
-  /* The 3n+1 toggle. The choice is remembered, so a visitor who switched the
-   * drawing off is not shown it growing again on every visit. localStorage can
-   * throw (Safari's private mode used to), and then the toggle simply forgets. */
+  /* The 3n+1 toggle. The drawing starts off -- the page opens on the card alone
+   * -- and is grown only for a visitor who asks for it. The choice is
+   * remembered, so someone who turned it on sees it again on their next visit.
+   * localStorage can throw (Safari's private mode used to), and then the
+   * toggle simply forgets. */
   const STORE = 'coral';
   const toggle = document.querySelector('.coral-toggle');
-  let on = true;
-  try { on = localStorage.getItem(STORE) !== 'off'; } catch (e) {}
+  let on = false;
+  try { on = localStorage.getItem(STORE) === 'on'; } catch (e) {}
   document.documentElement.classList.toggle('coral-off', !on);
 
   if (on) draw(!motion.matches);
