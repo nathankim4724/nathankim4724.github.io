@@ -7,7 +7,7 @@
   --text: #17171a;
   --muted: #6b6b66;
   --rule: rgba(23, 23, 26, 0.09);
-  --gap: 1.25rem; /* one value drives both the column gutter and the row gap */
+  --gap: 0.5rem; /* one value drives both the column gutter and the row gap */
   /* The pictures are the page, so the measure is wide and the side margin is
      only as much as it takes to keep the frames off the edge of the screen.
      The bar and the gallery share both values, so their left edges line up. */
@@ -177,7 +177,6 @@ h1 {
   display: block;
   width: 100%;
   height: auto;
-  border-radius: 3px;
   background: #f4f4f2; /* the space the picture will occupy, before it arrives */
   /* The ratio comes from the manifest, so the column is laid out at its final
      height on the first frame and nothing shifts as photographs load. A file
@@ -195,7 +194,6 @@ h1 {
 .gallery button:focus-visible {
   outline: 2px solid var(--text);
   outline-offset: 4px;
-  border-radius: 3px;
 }
 
 figcaption {
@@ -232,7 +230,6 @@ figcaption {
   /* Leaves room for the caption line under the frame. */
   max-height: calc(100% - 2.5rem);
   object-fit: contain;
-  border-radius: 3px;
   box-shadow: 0 24px 60px -30px rgba(23, 23, 26, 0.45);
 }
 
@@ -294,7 +291,7 @@ body.lightbox-open { overflow: hidden; }
 @media (max-width: 720px) {
   .back { padding: 0.9rem 0; }
   main { padding-top: 2rem; padding-bottom: 4rem; }
-  :root { --gap: 0.75rem; }
+  :root { --gap: 0.375rem; }
 }
 
 @media (max-width: 480px) {
