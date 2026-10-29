@@ -123,7 +123,6 @@ main {
   margin: auto;
   padding: 2.5rem;
   background: var(--bg);
-  border-radius: 16px;
   /* A hairline to hold the edge where a pale strand passes under it, over a
      soft drop shadow that lifts the block off the drawing. */
   box-shadow: 0 0 0 1px rgba(23, 23, 26, 0.05),
@@ -144,7 +143,6 @@ main {
   height: auto;
   aspect-ratio: 1000 / 1228;
   margin: 0;
-  border-radius: 8px;
   object-fit: contain;
 }
 
@@ -249,7 +247,6 @@ a:focus-visible {
 a:focus-visible {
   outline: 2px solid currentColor;
   outline-offset: 3px;
-  border-radius: 2px;
 }
 
 @media (prefers-reduced-motion: reduce) {
