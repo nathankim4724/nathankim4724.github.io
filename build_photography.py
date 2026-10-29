@@ -156,12 +156,17 @@ def previous() -> tuple[dict[str, str], list[str]]:
     rather than flattening them into whatever order the folder happens to be in.
     Entries are recognised by "name" where there is one and "src" otherwise,
     which is what a manifest written before the size ladder existed has.
+
+    An entry is a line, not a brace-matched span: "sources" nests an object
+    inside every entry, and a pattern that refuses inner braces matches only
+    that inner object -- which has no name, so the order and captions were
+    silently dropped on every re-run.
     """
     if not MANIFEST.exists():
         return {}, []
     text = MANIFEST.read_text(encoding="utf-8")
     captions, order = {}, []
-    for entry in re.findall(r"\{[^{}]*\}", text):
+    for entry in re.findall(r"^\s*(\{.*\})", text, re.MULTILINE):
         field = (re.search(r'"name"\s*:\s*"((?:[^"\\]|\\.)*)"', entry)
                  or re.search(r'"src"\s*:\s*"((?:[^"\\]|\\.)*)"', entry))
         if not field:
