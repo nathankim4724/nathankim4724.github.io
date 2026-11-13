@@ -36,9 +36,15 @@
     return sources[type || "avif"] || [];
   }
 
+  /* Each photograph has a folder of its own, named for it, and every copy
+     inside carries the name too: photos/seceda/seceda-800.avif. */
+  function file(photo, width, type) {
+    return "photos/" + photo.name + "/" + photo.name + "-" + width + "." + type;
+  }
+
   function srcset(photo, type) {
     return ladder(photo, type).map(function (w) {
-      return "photos/" + photo.name + "-" + w + "." + type + " " + w + "w";
+      return file(photo, w, type) + " " + w + "w";
     }).join(", ");
   }
 
@@ -48,8 +54,7 @@
   function fallback(photo) {
     var widths = ladder(photo, "jpg");
     if (!widths.length) return photo.src || "";
-    return "photos/" + photo.name + "-" +
-      widths[Math.min(widths.length - 1, Math.floor(widths.length / 2))] + ".jpg";
+    return file(photo, widths[Math.min(widths.length - 1, Math.floor(widths.length / 2))], "jpg");
   }
 
   /* A <picture> offering every format, with the <img> inside it left without a

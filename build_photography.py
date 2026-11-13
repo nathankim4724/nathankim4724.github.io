@@ -207,7 +207,7 @@ def natural_key(path: Path):
 def web_path(path: Path) -> str:
     """The src the page will use. Spaces and the like have to be escaped: this
     goes into an href, not onto a filesystem."""
-    return "photos/" + quote(path.name)
+    return "photos/" + quote(path.relative_to(FOLDER).as_posix())
 
 
 def write(lines: list[str]) -> None:
@@ -247,7 +247,7 @@ def from_sidecar() -> int:
 
     print(f"{len(entries)} photograph{'' if len(entries) == 1 else 's'} -> {MANIFEST}")
     print(f"  {total} files in {FOLDER}, "
-          f"{sum(p.stat().st_size for p in FOLDER.iterdir() if p.is_file()) / 1e6:.0f} MB")
+          f"{sum(p.stat().st_size for p in FOLDER.rglob('*') if p.is_file()) / 1e6:.0f} MB")
     report(kept, [e["name"] for e in entries])
     return 0
 
@@ -266,7 +266,7 @@ def main() -> int:
                   file=sys.stderr)
 
     files = sorted(
-        (p for p in FOLDER.iterdir()
+        (p for p in FOLDER.rglob("*")
          if p.is_file() and p.suffix.lower() in EXTENSIONS and not p.name.startswith(".")),
         key=natural_key,
     )

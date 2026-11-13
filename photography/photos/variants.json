@@ -1,6 +1,6 @@
 [
   {
-    "name": "0",
+    "name": "mount-sill-1",
     "width": 3376,
     "height": 6000,
     "sources": {
@@ -26,7 +26,7 @@
     "color": "#706d47"
   },
   {
-    "name": "1",
+    "name": "seoraksan-1",
     "width": 3840,
     "height": 2160,
     "sources": {
@@ -57,7 +57,7 @@
     "color": "#505757"
   },
   {
-    "name": "3",
+    "name": "ulsanbawi",
     "width": 3840,
     "height": 2160,
     "sources": {
@@ -88,7 +88,7 @@
     "color": "#353f43"
   },
   {
-    "name": "4",
+    "name": "hakone-1",
     "width": 3840,
     "height": 2160,
     "sources": {
@@ -119,7 +119,7 @@
     "color": "#533838"
   },
   {
-    "name": "6-2",
+    "name": "mount-sill-2",
     "width": 3840,
     "height": 2160,
     "sources": {
@@ -150,7 +150,7 @@
     "color": "#52553b"
   },
   {
-    "name": "6",
+    "name": "hakone-2",
     "width": 3840,
     "height": 2160,
     "sources": {
@@ -181,7 +181,7 @@
     "color": "#25301e"
   },
   {
-    "name": "dji-20250602195448-0082-d",
+    "name": "china-walls",
     "width": 2224,
     "height": 3953,
     "sources": {
@@ -207,7 +207,7 @@
     "color": "#5d5b5e"
   },
   {
-    "name": "dsc04231-2",
+    "name": "lake-louise-1",
     "width": 3480,
     "height": 6192,
     "sources": {
@@ -233,7 +233,7 @@
     "color": "#626767"
   },
   {
-    "name": "dsc04336",
+    "name": "lake-louise-2",
     "width": 3480,
     "height": 6192,
     "sources": {
@@ -259,7 +259,7 @@
     "color": "#686151"
   },
   {
-    "name": "dsc04905",
+    "name": "alpe-di-siusi",
     "width": 6192,
     "height": 3480,
     "sources": {
@@ -290,7 +290,7 @@
     "color": "#7a8384"
   },
   {
-    "name": "dsc05012",
+    "name": "sass-rigais",
     "width": 6192,
     "height": 3480,
     "sources": {
@@ -321,7 +321,7 @@
     "color": "#707c7f"
   },
   {
-    "name": "dsc05322",
+    "name": "cadini-di-misurina",
     "width": 3480,
     "height": 6192,
     "sources": {
@@ -347,7 +347,7 @@
     "color": "#5f6c6f"
   },
   {
-    "name": "dsc05445",
+    "name": "alleghe",
     "width": 6192,
     "height": 3480,
     "sources": {
@@ -378,7 +378,7 @@
     "color": "#605340"
   },
   {
-    "name": "dsc05477",
+    "name": "seceda",
     "width": 6192,
     "height": 3480,
     "sources": {
@@ -409,7 +409,7 @@
     "color": "#908c7c"
   },
   {
-    "name": "img-5387",
+    "name": "haiku-stairs",
     "width": 1445,
     "height": 2174,
     "sources": {
@@ -432,7 +432,7 @@
     "color": "#9e8f6d"
   },
   {
-    "name": "rahhhh",
+    "name": "san-diego-bay",
     "width": 6123,
     "height": 3444,
     "sources": {
@@ -463,7 +463,7 @@
     "color": "#79765b"
   },
   {
-    "name": "sun-rays",
+    "name": "seoraksan-2",
     "width": 3840,
     "height": 2160,
     "sources": {
@@ -494,7 +494,7 @@
     "color": "#2b331c"
   },
   {
-    "name": "sunset",
+    "name": "la-jolla",
     "width": 3483,
     "height": 6192,
     "sources": {
