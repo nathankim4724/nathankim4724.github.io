@@ -111,6 +111,36 @@ body {
   animation-fill-mode: both;
 }
 
+/* Number labels: each node's integer flickers in as the growth wave reaches
+   it, then fades; collatz.js sets the delay, duration and --peak opacity per
+   label and removes the group once the wave has passed. A halo in the page
+   colour lifts the digits off the strand they sit on. */
+@keyframes coral-label {
+  0%   { opacity: 0; }
+  8%   { opacity: var(--peak); }
+  16%  { opacity: calc(var(--peak) * 0.3); }
+  26%  { opacity: var(--peak); }
+  100% { opacity: 0; }
+}
+
+#coral .labels {
+  fill: var(--ink);
+  stroke: var(--bg);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+  paint-order: stroke;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+#coral .labels text {
+  opacity: 0;
+  animation-name: coral-label;
+  animation-timing-function: ease-out;
+  animation-fill-mode: both;
+}
+
 /* `margin: auto` centers on both axes without clipping overflow
    the way `align-items: center` would on short viewports. */
 /* Portrait beside the text on wide screens, stacked below 720px. The card is

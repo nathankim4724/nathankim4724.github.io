@@ -100,6 +100,16 @@
   const PULSE_ALPHA = 0.55;
   const PULSE_GAP_MIN = 2000, PULSE_GAP_MAX = 5000;   // rest between pulses
 
+  /* Number labels on the growth wave: as the wave reaches a node, its integer
+   * flickers up beside it and fades. Only on-screen nodes are labelled, and only
+   * where a label would not collide with one already placed -- shallow nodes
+   * claim space first, so the short numbers near the trunk always show and the
+   * crowded tips get a sparse sampling instead of an unreadable pile. */
+  const LABEL_SIZE = 10;                          // px at GAUGE
+  const LABEL_GAP = 8;                            // px kept clear around a label
+  const LABEL_MS = 700;                           // one label's flicker
+  const LABEL_NEAR = 0.8, LABEL_FAR = 0.35;       // peak opacity, root -> tip
+
   const svg = document.getElementById('coral');
   if (!svg) return;
 
@@ -107,7 +117,7 @@
   function build() {
     const rad = Math.PI / 180;
     const even = EVEN_TURN * rad, odd = ODD_TURN * rad;
-    const xs = [0], ys = [0], kids = [[]], depth = [0], parent = [-1];
+    const xs = [0], ys = [0], kids = [[]], depth = [0], parent = [-1], vals = [1];
     const stack = [[1, 0, START_HEADING * rad, 0]];
     while (stack.length) {
       const [m, i, heading, d] = stack.pop();
@@ -126,11 +136,12 @@
         kids.push([]);
         depth.push(d + 1);
         parent.push(i);
+        vals.push(value);
         kids[i].push(j);
         stack.push([value, j, h, d + 1]);
       }
     }
-    return { xs, ys, kids, depth, parent };
+    return { xs, ys, kids, depth, parent, vals };
   }
 
   /* Collapse runs of single-child nodes into polylines, so the DOM stays small. */
@@ -172,8 +183,38 @@
     return out;
   }
 
-  const { xs, ys, kids, depth, parent } = build();
+  const { xs, ys, kids, depth, parent, vals } = build();
   const polys = slice(chains(kids), depth);
+  // Label priority: shallow first, so the trunk's short numbers win any overlap.
+  const byDepth = [...xs.keys()].sort((a, b) => depth[a] - depth[b]);
+
+  /* A route -- consecutive tree nodes, in either direction -- as one Catmull-Rom
+   * cubic per edge, passing through every node. The tangent at each node comes
+   * from its drawn-geometry neighbours (parent on one side, first child on the
+   * other) rather than from the route's own ends, which buys two things: pieces
+   * cut at the band boundaries meet with matching tangents instead of kinking,
+   * and the pulse lands exactly on the strands it retraces, because Catmull-Rom
+   * is symmetric under reversal. Where there is no neighbour -- the root, a tip
+   * -- the tangent clamps to the chord. A branch's odd child is not its parent's
+   * continuation (that is the even child), so the odd corner keeps a crease,
+   * which is where the drawing ought to have one. */
+  function curveD(route, s, ox, oy) {
+    const X = i => xs[i] * s + ox, Y = i => oy - ys[i] * s;
+    // The neighbour of i on the far side of j, following the drawn geometry.
+    const beyond = (i, j) => (j === parent[i] ? kids[i][0] : parent[i]);
+    let d = `M${X(route[0]).toFixed(1)} ${Y(route[0]).toFixed(1)}`;
+    for (let k = 0; k + 1 < route.length; k++) {
+      const a = route[k], b = route[k + 1];
+      const ax = X(a), ay = Y(a), bx = X(b), by = Y(b);
+      const pre = beyond(a, b), post = beyond(b, a);
+      const p0x = pre >= 0 ? X(pre) : ax, p0y = pre >= 0 ? Y(pre) : ay;
+      const p3x = post >= 0 ? X(post) : bx, p3y = post >= 0 ? Y(post) : by;
+      d += `C${(ax + (bx - p0x) / 6).toFixed(1)} ${(ay + (by - p0y) / 6).toFixed(1)}` +
+           ` ${(bx - (p3x - ax) / 6).toFixed(1)} ${(by - (p3y - ay) / 6).toFixed(1)}` +
+           ` ${bx.toFixed(1)} ${by.toFixed(1)}`;
+    }
+    return d;
+  }
 
   /* A route -- consecutive tree nodes, in either direction -- as one Catmull-Rom
    * cubic per edge, passing through every node. The tangent at each node comes
@@ -284,7 +325,58 @@
              ` stroke-opacity="${alpha.toFixed(3)}"${style}/>`;
     }
 
-    svg.innerHTML = `<g class="strands">${out}</g>`;
+    svg.innerHTML = `<g class="strands">${out}</g>` +
+      (animate ? labels(s, ox, oy, gauge, w, h, lead, span) : '');
+
+    // Labels are a one-off; drop them once the last flicker has played out.
+    const g = svg.querySelector('.labels');
+    if (g) setTimeout(() => g.remove(), GROW_MS + LABEL_MS + 200);
+  }
+
+  /* One <text> per labelled node, timed to the instant the growth wave reaches
+   * it. The wave runs at one speed in depth, so that is (depth - lead) / span of
+   * GROW_MS -- the same clock the strands use. Collisions are checked against a
+   * coarse grid of the boxes already placed. #coral is mirrored with scaleX(-1),
+   * so each label carries its own scale(-1 1) to read the right way round. */
+  function labels(s, ox, oy, gauge, w, h, lead, span) {
+    const size = LABEL_SIZE * gauge;
+    const charW = size * 0.62, halfH = size * 0.6 + LABEL_GAP / 2;
+    const CELL = 64, grid = new Map(), boxes = [];
+    let out = '';
+    for (const i of byDepth) {
+      const px = xs[i] * s + ox, py = oy - ys[i] * s;
+      if (px < 0 || py < 0 || px > w || py > h) continue;
+      const text = String(vals[i]);
+      const halfW = text.length * charW / 2 + LABEL_GAP / 2;
+      const l = px - halfW, r = px + halfW, t = py - halfH, b = py + halfH;
+      const cx0 = Math.floor(l / CELL), cx1 = Math.floor(r / CELL);
+      const cy0 = Math.floor(t / CELL), cy1 = Math.floor(b / CELL);
+      let clear = true;
+      search: for (let cx = cx0; cx <= cx1; cx++) {
+        for (let cy = cy0; cy <= cy1; cy++) {
+          for (const k of grid.get(cx + ',' + cy) || []) {
+            const o = boxes[k];
+            if (l < o[2] && r > o[0] && t < o[3] && b > o[1]) { clear = false; break search; }
+          }
+        }
+      }
+      if (!clear) continue;
+      const k = boxes.push([l, t, r, b]) - 1;
+      for (let cx = cx0; cx <= cx1; cx++) {
+        for (let cy = cy0; cy <= cy1; cy++) {
+          const key = cx + ',' + cy;
+          const cell = grid.get(key);
+          if (cell) cell.push(k); else grid.set(key, [k]);
+        }
+      }
+      const f = BANDS > 1 ? Math.pow(band(depth[i]) / (BANDS - 1), RAMP) : 0;
+      const peak = LABEL_NEAR + (LABEL_FAR - LABEL_NEAR) * f;
+      out += `<text transform="translate(${px.toFixed(1)} ${py.toFixed(1)}) scale(-1 1)"` +
+             ` style="--peak:${peak.toFixed(2)};` +
+             `animation-delay:${Math.round((depth[i] - lead) / span * GROW_MS)}ms;` +
+             `animation-duration:${LABEL_MS}ms">${text}</text>`;
+    }
+    return `<g class="labels" font-size="${size.toFixed(1)}">${out}</g>`;
   }
 
   const motion = matchMedia('(prefers-reduced-motion: reduce)');
