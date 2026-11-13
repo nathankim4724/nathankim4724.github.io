@@ -23,6 +23,10 @@ data arrives, so nothing jumps around as the gallery loads.
 Two things in the manifest are yours to set by hand, and both survive a re-run:
 
   captions   add a "caption" to any entry and it is carried across
+  locations  add a "location" ("Kyoto, Japan") and, if you like, "coords"
+             ([35.0, 135.8], latitude then longitude) -- shown on the film
+             strip that slides up when a photograph is hovered. Round the
+             coordinates to one decimal place (about 10 km); they are public
   order      the gallery shows photographs in manifest order, so reordering the
              lines reorders the page; anything new is appended at the end
 
@@ -58,8 +62,12 @@ HEADER = """\
      python3 optimize_photography.py
 
    from the repository root, which makes the web copies and then rebuilds this.
-   Captions and the order of these lines are yours to set by hand; both are
-   carried across a re-run, and new photographs are appended at the end.
+   Captions, locations and the order of these lines are yours to set by hand;
+   all are carried across a re-run, and new photographs are appended at the
+   end. Keep each photograph on one line. A location is a place name, plus
+   optional coordinates rounded to one decimal place:
+
+     "location": "Kyoto, Japan", "coords": [35.0, 135.8]
 
    `sources` is the ladder of copies that exist for a photograph, per format.
    photography.js turns each one into a srcset, so the browser downloads the one
@@ -149,13 +157,19 @@ def dimensions(path: Path) -> tuple[int, int] | None:
 
 # --- what the last manifest said ---------------------------------------------
 
-def previous() -> tuple[dict[str, str], list[str]]:
-    """The captions and the running order from the current manifest, if any.
+# The fields a person writes into the manifest by hand. Everything else in an
+# entry is read from the folder, so these are the only ones a re-run carries.
+KEPT = ("caption", "location", "coords")
+
+
+def previous() -> tuple[dict[str, dict], list[str]]:
+    """The hand-written fields and the running order from the current manifest.
 
     Both are things a person edits by hand, so a re-run has to give them back
     rather than flattening them into whatever order the folder happens to be in.
-    Entries are recognised by "name" where there is one and "src" otherwise,
-    which is what a manifest written before the size ladder existed has.
+    Each photograph is one line of JSON, which is how it is read back. Entries
+    are recognised by "name" where there is one and "src" otherwise, which is
+    what a manifest written before the size ladder existed has.
 
     An entry is a line, not a brace-matched span: "sources" nests an object
     inside every entry, and a pattern that refuses inner braces matches only
@@ -164,19 +178,23 @@ def previous() -> tuple[dict[str, str], list[str]]:
     """
     if not MANIFEST.exists():
         return {}, []
-    text = MANIFEST.read_text(encoding="utf-8")
-    captions, order = {}, []
-    for entry in re.findall(r"^\s*(\{.*\})", text, re.MULTILINE):
-        field = (re.search(r'"name"\s*:\s*"((?:[^"\\]|\\.)*)"', entry)
-                 or re.search(r'"src"\s*:\s*"((?:[^"\\]|\\.)*)"', entry))
-        if not field:
+    kept, order = {}, []
+    for line in MANIFEST.read_text(encoding="utf-8").splitlines():
+        line = line.strip().rstrip(",")
+        if not line.startswith("{"):
             continue
-        key = json.loads(f'"{field.group(1)}"')
+        try:
+            entry = json.loads(line)
+        except ValueError:
+            print(f"  could not read this manifest line, so its hand-written "
+                  f"fields will not be kept: {line[:70]}", file=sys.stderr)
+            continue
+        key = entry.get("name") or entry.get("src")
+        if not isinstance(key, str):
+            continue
         order.append(key)
-        caption = re.search(r'"caption"\s*:\s*"((?:[^"\\]|\\.)*)"', entry)
-        if caption:
-            captions[key] = json.loads(f'"{caption.group(1)}"')
-    return captions, order
+        kept[key] = {k: entry[k] for k in KEPT if entry.get(k)}
+    return kept, order
 
 
 # --- ordering ----------------------------------------------------------------
@@ -197,11 +215,21 @@ def write(lines: list[str]) -> None:
                         encoding="utf-8")
 
 
+def report(kept: dict[str, dict], keys: list[str]) -> None:
+    for field in KEPT:
+        n = sum(1 for k in keys if field in kept.get(k, {}))
+        if n:
+            print(f"  kept {n} {field}{'' if n == 1 or field == 'coords' else 's'}")
+    missing = [k for k in keys if "location" not in kept.get(k, {})]
+    if missing:
+        print(f"  no location yet for: {', '.join(missing)}")
+
+
 def from_sidecar() -> int:
     """The normal path: optimize_photography.py has already made the ladder and
     written down what it made."""
     entries = json.loads(SIDECAR.read_text(encoding="utf-8"))
-    captions, order = previous()
+    kept, order = previous()
 
     rank = {name: i for i, name in enumerate(order)}
     entries.sort(key=lambda e: rank.get(e["name"], len(rank)))
@@ -211,8 +239,7 @@ def from_sidecar() -> int:
         out = {k: entry[k] for k in ("name", "width", "height", "sources")}
         if entry.get("color"):
             out["color"] = entry["color"]
-        if captions.get(entry["name"]):
-            out["caption"] = captions[entry["name"]]
+        out.update(kept.get(entry["name"], {}))
         lines.append("  " + json.dumps(out, ensure_ascii=False) + ",")
         total += sum(len(ws) for ws in entry["sources"].values())
 
@@ -221,9 +248,7 @@ def from_sidecar() -> int:
     print(f"{len(entries)} photograph{'' if len(entries) == 1 else 's'} -> {MANIFEST}")
     print(f"  {total} files in {FOLDER}, "
           f"{sum(p.stat().st_size for p in FOLDER.iterdir() if p.is_file()) / 1e6:.0f} MB")
-    kept = sum(1 for e in entries if captions.get(e["name"]))
-    if kept:
-        print(f"  kept {kept} caption{'' if kept == 1 else 's'}")
+    report(kept, [e["name"] for e in entries])
     return 0
 
 
@@ -246,7 +271,7 @@ def main() -> int:
         key=natural_key,
     )
 
-    captions, order = previous()
+    kept, order = previous()
 
     # Photographs already in the manifest keep the position they were given;
     # the rest follow, newest arrivals at the end.
@@ -263,8 +288,7 @@ def main() -> int:
             entry["width"], entry["height"] = size
         else:
             unsized.append(path.name)
-        if captions.get(src):
-            entry["caption"] = captions[src]
+        entry.update(kept.get(src, {}))
         if path.stat().st_size > 2_000_000:
             heavy.append((path.name, path.stat().st_size / 1_000_000))
         lines.append("  " + json.dumps(entry, ensure_ascii=False) + ",")
@@ -278,9 +302,7 @@ def main() -> int:
     if heavy:
         print("  large enough to be worth exporting smaller, and worth checking "
               "for EXIF: " + ", ".join(f"{n} ({mb:.1f} MB)" for n, mb in heavy))
-    kept = sum(1 for p in files if captions.get(web_path(p)))
-    if kept:
-        print(f"  kept {kept} caption{'' if kept == 1 else 's'}")
+    report(kept, [web_path(p) for p in files])
     total = sum(p.stat().st_size for p in files) / 1_000_000
     print(f"  {total:.0f} MB in the folder")
     return 0

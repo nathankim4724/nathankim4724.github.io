@@ -4,8 +4,12 @@
      python3 optimize_photography.py
 
    from the repository root, which makes the web copies and then rebuilds this.
-   Captions and the order of these lines are yours to set by hand; both are
-   carried across a re-run, and new photographs are appended at the end.
+   Captions, locations and the order of these lines are yours to set by hand;
+   all are carried across a re-run, and new photographs are appended at the
+   end. Keep each photograph on one line. A location is a place name, plus
+   optional coordinates rounded to one decimal place:
+
+     "location": "Kyoto, Japan", "coords": [35.0, 135.8]
 
    `sources` is the ladder of copies that exist for a photograph, per format.
    photography.js turns each one into a srcset, so the browser downloads the one
@@ -13,22 +17,22 @@
    `width` and `height` are the original's, and are only ever used as a shape. */
 
 window.PHOTOS = [
-  {"name": "0", "width": 3376, "height": 6000, "sources": {"avif": [400, 800, 1200, 1800, 2161], "webp": [400, 800, 1200, 1800, 2161], "jpg": [800, 1800]}, "color": "#706d47"},
-  {"name": "1", "width": 3840, "height": 2160, "sources": {"avif": [400, 800, 1200, 1800, 2400, 3200, 3840], "webp": [400, 800, 1200, 1800, 2400, 3200, 3840], "jpg": [800, 1800, 2400]}, "color": "#505757"},
-  {"name": "3", "width": 3840, "height": 2160, "sources": {"avif": [400, 800, 1200, 1800, 2400, 3200, 3840], "webp": [400, 800, 1200, 1800, 2400, 3200, 3840], "jpg": [800, 1800, 2400]}, "color": "#353f43"},
-  {"name": "4", "width": 3840, "height": 2160, "sources": {"avif": [400, 800, 1200, 1800, 2400, 3200, 3840], "webp": [400, 800, 1200, 1800, 2400, 3200, 3840], "jpg": [800, 1800, 2400]}, "color": "#533838"},
+  {"name": "0", "width": 3376, "height": 6000, "sources": {"avif": [400, 800, 1200, 1800, 2161], "webp": [400, 800, 1200, 1800, 2161], "jpg": [800, 1800]}, "color": "#706d47", "location": "Mount Sill, California", "coords": [37.1, -118.5]},
+  {"name": "1", "width": 3840, "height": 2160, "sources": {"avif": [400, 800, 1200, 1800, 2400, 3200, 3840], "webp": [400, 800, 1200, 1800, 2400, 3200, 3840], "jpg": [800, 1800, 2400]}, "color": "#505757", "location": "Seoraksan National Park, South Korea", "coords": [38.1, 128.5]},
+  {"name": "3", "width": 3840, "height": 2160, "sources": {"avif": [400, 800, 1200, 1800, 2400, 3200, 3840], "webp": [400, 800, 1200, 1800, 2400, 3200, 3840], "jpg": [800, 1800, 2400]}, "color": "#353f43", "location": "Ulsanbawi, South Korea", "coords": [38.2, 128.4]},
+  {"name": "4", "width": 3840, "height": 2160, "sources": {"avif": [400, 800, 1200, 1800, 2400, 3200, 3840], "webp": [400, 800, 1200, 1800, 2400, 3200, 3840], "jpg": [800, 1800, 2400]}, "color": "#533838", "location": "Hakone, Japan", "coords": [35.2, 139.0]},
   {"name": "dsc04905", "width": 6192, "height": 3480, "sources": {"avif": [400, 800, 1200, 1800, 2400, 3200, 3840], "webp": [400, 800, 1200, 1800, 2400, 3200, 3840], "jpg": [800, 1800, 2400]}, "color": "#7a8384"},
-  {"name": "6-2", "width": 3840, "height": 2160, "sources": {"avif": [400, 800, 1200, 1800, 2400, 3200, 3840], "webp": [400, 800, 1200, 1800, 2400, 3200, 3840], "jpg": [800, 1800, 2400]}, "color": "#52553b"},
+  {"name": "6-2", "width": 3840, "height": 2160, "sources": {"avif": [400, 800, 1200, 1800, 2400, 3200, 3840], "webp": [400, 800, 1200, 1800, 2400, 3200, 3840], "jpg": [800, 1800, 2400]}, "color": "#52553b", "location": "Mount Sill, California", "coords": [37.1, -118.5]},
   {"name": "dsc05445", "width": 6192, "height": 3480, "sources": {"avif": [400, 800, 1200, 1800, 2400, 3200, 3840], "webp": [400, 800, 1200, 1800, 2400, 3200, 3840], "jpg": [800, 1800, 2400]}, "color": "#605340"},
-  {"name": "6", "width": 3840, "height": 2160, "sources": {"avif": [400, 800, 1200, 1800, 2400, 3200, 3840], "webp": [400, 800, 1200, 1800, 2400, 3200, 3840], "jpg": [800, 1800, 2400]}, "color": "#25301e"},
+  {"name": "6", "width": 3840, "height": 2160, "sources": {"avif": [400, 800, 1200, 1800, 2400, 3200, 3840], "webp": [400, 800, 1200, 1800, 2400, 3200, 3840], "jpg": [800, 1800, 2400]}, "color": "#25301e", "location": "Hakone, Japan", "coords": [35.2, 139.0]},
   {"name": "dsc05322", "width": 3480, "height": 6192, "sources": {"avif": [400, 800, 1200, 1800, 2158], "webp": [400, 800, 1200, 1800, 2158], "jpg": [800, 1800]}, "color": "#5f6c6f"},
-  {"name": "dji-20250602195448-0082-d", "width": 2224, "height": 3953, "sources": {"avif": [400, 800, 1200, 1800, 2160], "webp": [400, 800, 1200, 1800, 2160], "jpg": [800, 1800]}, "color": "#5d5b5e"},
-  {"name": "dsc04231-2", "width": 3480, "height": 6192, "sources": {"avif": [400, 800, 1200, 1800, 2158], "webp": [400, 800, 1200, 1800, 2158], "jpg": [800, 1800]}, "color": "#626767"},
-  {"name": "dsc04336", "width": 3480, "height": 6192, "sources": {"avif": [400, 800, 1200, 1800, 2158], "webp": [400, 800, 1200, 1800, 2158], "jpg": [800, 1800]}, "color": "#686151"},
-  {"name": "img-5387", "width": 1445, "height": 2174, "sources": {"avif": [400, 800, 1200, 1445], "webp": [400, 800, 1200, 1445], "jpg": [800]}, "color": "#9e8f6d"},
+  {"name": "dji-20250602195448-0082-d", "width": 2224, "height": 3953, "sources": {"avif": [400, 800, 1200, 1800, 2160], "webp": [400, 800, 1200, 1800, 2160], "jpg": [800, 1800]}, "color": "#5d5b5e", "location": "China Walls, Hawaiʻi", "coords": [21.3, -157.7]},
+  {"name": "dsc04231-2", "width": 3480, "height": 6192, "sources": {"avif": [400, 800, 1200, 1800, 2158], "webp": [400, 800, 1200, 1800, 2158], "jpg": [800, 1800]}, "color": "#626767", "location": "Lake Louise, Alberta", "coords": [51.4, -116.2]},
+  {"name": "dsc04336", "width": 3480, "height": 6192, "sources": {"avif": [400, 800, 1200, 1800, 2158], "webp": [400, 800, 1200, 1800, 2158], "jpg": [800, 1800]}, "color": "#686151", "location": "Lake Louise, Alberta", "coords": [51.4, -116.2]},
+  {"name": "img-5387", "width": 1445, "height": 2174, "sources": {"avif": [400, 800, 1200, 1445], "webp": [400, 800, 1200, 1445], "jpg": [800]}, "color": "#9e8f6d", "location": "Haʻikū Stairs, Hawaiʻi", "coords": [21.4, -157.8]},
   {"name": "dsc05477", "width": 6192, "height": 3480, "sources": {"avif": [400, 800, 1200, 1800, 2400, 3200, 3840], "webp": [400, 800, 1200, 1800, 2400, 3200, 3840], "jpg": [800, 1800, 2400]}, "color": "#908c7c"},
-  {"name": "rahhhh", "width": 6123, "height": 3444, "sources": {"avif": [400, 800, 1200, 1800, 2400, 3200, 3840], "webp": [400, 800, 1200, 1800, 2400, 3200, 3840], "jpg": [800, 1800, 2400]}, "color": "#79765b"},
+  {"name": "rahhhh", "width": 6123, "height": 3444, "sources": {"avif": [400, 800, 1200, 1800, 2400, 3200, 3840], "webp": [400, 800, 1200, 1800, 2400, 3200, 3840], "jpg": [800, 1800, 2400]}, "color": "#79765b", "location": "San Diego Bay, California", "coords": [32.7, -117.2]},
   {"name": "dsc05012", "width": 6192, "height": 3480, "sources": {"avif": [400, 800, 1200, 1800, 2400, 3200, 3840], "webp": [400, 800, 1200, 1800, 2400, 3200, 3840], "jpg": [800, 1800, 2400]}, "color": "#707c7f"},
-  {"name": "sun-rays", "width": 3840, "height": 2160, "sources": {"avif": [400, 800, 1200, 1800, 2400, 3200, 3840], "webp": [400, 800, 1200, 1800, 2400, 3200, 3840], "jpg": [800, 1800, 2400]}, "color": "#2b331c"},
-  {"name": "sunset", "width": 3483, "height": 6192, "sources": {"avif": [400, 800, 1200, 1800, 2160], "webp": [400, 800, 1200, 1800, 2160], "jpg": [800, 1800]}, "color": "#755731"},
+  {"name": "sun-rays", "width": 3840, "height": 2160, "sources": {"avif": [400, 800, 1200, 1800, 2400, 3200, 3840], "webp": [400, 800, 1200, 1800, 2400, 3200, 3840], "jpg": [800, 1800, 2400]}, "color": "#2b331c", "location": "Seoraksan National Park, South Korea", "coords": [38.1, 128.5]},
+  {"name": "sunset", "width": 3483, "height": 6192, "sources": {"avif": [400, 800, 1200, 1800, 2160], "webp": [400, 800, 1200, 1800, 2160], "jpg": [800, 1800]}, "color": "#755731", "location": "La Jolla, California", "coords": [32.8, -117.3]},
 ];
