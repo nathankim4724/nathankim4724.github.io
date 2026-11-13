@@ -147,7 +147,8 @@
 
     var button = document.createElement("button");
     button.type = "button";
-    button.setAttribute("aria-label", "Open " + (photo.caption || photo.alt || "photograph") + " full size");
+    button.setAttribute("aria-label", "Open " + (photo.caption || photo.alt || "photograph") +
+      (photo.location ? ", " + photo.location + "," : "") + " full size");
     button.addEventListener("click", function () { open(i); });
     thumbnails.push(button);
 
@@ -192,6 +193,7 @@
     });
 
     button.appendChild(parts.el);
+    if (photo.location) button.appendChild(edge(photo, i));
     figure.appendChild(button);
 
     if (photo.caption) {
@@ -200,6 +202,89 @@
       figure.appendChild(caption);
     }
   });
+
+  /* ---- where it was taken ------------------------------------------------ */
+
+  /* A strip that slides up from the bottom of the frame on hover, marked like
+     the edge of a negative: frame number, place, coordinates. It is tinted with
+     the photograph's own colour, and the text scrambles briefly before it
+     settles, like a GPS getting a fix. The strip is decoration for a pointer;
+     the place is also in the button's label and in the lightbox caption, which
+     is where a phone, with no hover, gets to see it. */
+
+  function coordinates(c) {
+    if (!Array.isArray(c) || c.length !== 2) return "";
+    var lat = Number(c[0]), lon = Number(c[1]);
+    if (!isFinite(lat) || !isFinite(lon)) return "";
+    return Math.abs(lat).toFixed(1) + "°" + (lat >= 0 ? "N" : "S") + " " +
+           Math.abs(lon).toFixed(1) + "°" + (lon >= 0 ? "E" : "W");
+  }
+
+  var still = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var GLYPHS = { letter: "ABCDEFGHIJKLMNOPQRSTUVWXYZ", digit: "0123456789" };
+
+  /* Every letter and digit cycles until its turn comes, and they lock in from
+     left to right. Spaces and punctuation hold still, so the shape of the line
+     is there from the first frame and only its characters are unsettled. */
+  function scramble(el, text, duration) {
+    if (el.raf) cancelAnimationFrame(el.raf);
+    if (still) { el.textContent = text; return; }
+    var start = performance.now();
+    (function tick(now) {
+      var t = Math.min(1, (now - start) / duration);
+      var locked = Math.floor(t * text.length);
+      var out = "";
+      for (var k = 0; k < text.length; k++) {
+        var c = text.charAt(k);
+        var pool = /[0-9]/.test(c) ? GLYPHS.digit : /[A-Za-z]/.test(c) ? GLYPHS.letter : null;
+        out += k < locked || !pool ? c : pool.charAt((Math.random() * pool.length) | 0);
+      }
+      el.textContent = out;
+      if (t < 1) el.raf = requestAnimationFrame(tick);
+    })(start);
+  }
+
+  function edge(photo, i) {
+    var strip = document.createElement("span");
+    strip.className = "edge";
+    strip.setAttribute("aria-hidden", "true"); /* the button's label already says it */
+    if (photo.color) strip.style.setProperty("--tint", photo.color);
+
+    var frame = document.createElement("span");
+    frame.className = "edge-frame";
+    frame.textContent = "▸ " + (i + 1 < 10 ? "0" : "") + (i + 1) + "A";
+
+    var place = document.createElement("span");
+    place.className = "edge-place";
+    place.textContent = photo.location;
+
+    var where = coordinates(photo.coords);
+    var coords = document.createElement("span");
+    coords.className = "edge-coords";
+    coords.textContent = where;
+
+    strip.appendChild(frame);
+    strip.appendChild(place);
+    if (where) strip.appendChild(coords);
+
+    /* CSS decides whether the strip is shown at all (only where there is a real
+       hover, or keyboard focus); this just replays the settle each time. */
+    strip.reveal = function () {
+      scramble(place, photo.location, 420);
+      if (where) scramble(coords, where, 620);
+    };
+    return strip;
+  }
+
+  function revealIn(target) {
+    var strip = target && target.querySelector && target.querySelector(".edge");
+    if (strip) strip.reveal();
+  }
+  /* mouseenter does not bubble, so it is caught on the way down. */
+  gallery.addEventListener("mouseenter", function (e) {
+    if (e.target.tagName === "BUTTON") revealIn(e.target);
+  }, true);
+  gallery.addEventListener("focusin", function (e) { revealIn(e.target); });
 
   /* ---- the arrangement --------------------------------------------------- */
 
@@ -636,7 +721,7 @@
     boxImg.alt = photo.alt || photo.caption || "";
     if (photo.color) boxImg.style.background = photo.color;
     serve(boxParts, photo, drawnWidth(photo));
-    boxCaption.textContent = photo.caption || "";
+    boxCaption.textContent = [photo.caption, photo.location].filter(Boolean).join(" · ");
 
     /* Warm the neighbours so stepping through feels instant -- at the size they
        will be shown at, so the warmed copy is the one that gets used. */
