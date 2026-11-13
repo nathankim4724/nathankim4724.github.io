@@ -199,13 +199,11 @@ h1 {
 /* ---- where it was taken ------------------------------------------------- */
 
 /* The film-edge strip: tucked under the bottom of the frame until a pointer
-   rests on it or the keyboard lands on it. The button clips it, so the button
-   takes the frame's rounded corners too. Touch screens never see it -- there is
+   rests on it or the keyboard lands on it. The button clips it. Touch screens never see it -- there is
    no hover to give it up again -- and get the place in the lightbox instead. */
 .gallery button {
   position: relative;
   overflow: hidden;
-  border-radius: 3px;
   container-type: inline-size; /* so the strip can respond to the frame's width */
 }
 
