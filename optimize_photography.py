@@ -36,8 +36,11 @@ was smaller than the space it was being drawn into. That was the softness.
             not turn anything on its side. The colour profile is kept -- it
             carries nothing personal and the colours are wrong without it.
 
-Files come out named `<slug>-<width>.<ext>`, and the sidecar variants.json tells
-build_photography.py what was made. The originals are never touched, and
+Each photograph gets a folder of its own named after its original, with files
+named `<slug>/<slug>-<width>.<ext>` inside -- so `Seceda.jpg` becomes
+photos/seceda/seceda-800.avif and the rest of its ladder. Rename an original
+to rename its folder. The sidecar variants.json tells build_photography.py
+what was made. The originals are never touched, and
 originals/ is kept out of git -- it is your copy of the photographs, not the
 site's.
 
@@ -239,7 +242,7 @@ def main() -> int:
             # One resize per width, shared by whichever formats want that rung.
             widths = sorted({w for ws in sources.values() for w in ws})
 
-            files = {f"{slug}-{w}.{fmt}" for fmt in FORMATS for w in sources[fmt]}
+            files = {f"{slug}/{slug}-{w}.{fmt}" for fmt in FORMATS for w in sources[fmt]}
             expected |= files
 
             entry = {
@@ -267,13 +270,15 @@ def main() -> int:
             entry["color"] = average_colour(master)
 
             written = 0
+            (WEB / slug).mkdir(exist_ok=True)
             for w in widths:
                 rung = render(master, w, max(1, round(source_h * w / source_w)))
                 for fmt in FORMATS:
                     if w not in sources[fmt]:
                         continue
-                    encode(rung, WEB / f"{slug}-{w}.{fmt}", fmt, icc)
-                    written += (WEB / f"{slug}-{w}.{fmt}").stat().st_size
+                    out = WEB / slug / f"{slug}-{w}.{fmt}"
+                    encode(rung, out, fmt, icc)
+                    written += out.stat().st_size
                 if rung is not master:
                     rung.close()
 
@@ -285,10 +290,14 @@ def main() -> int:
 
     # A web copy whose original has gone should go too, or it lingers in the
     # gallery with nothing behind it.
-    for stale in sorted(WEB.iterdir()):
-        if stale.is_file() and not stale.name.startswith(".") and stale.name not in expected:
-            print(f"  removing {stale.name}, no longer in originals/")
+    for stale in sorted(WEB.rglob("*")):
+        name = stale.relative_to(WEB).as_posix()
+        if stale.is_file() and not stale.name.startswith(".") and name not in expected:
+            print(f"  removing {name}, no longer in originals/")
             stale.unlink()
+    for folder in sorted(WEB.iterdir()):
+        if folder.is_dir() and not any(folder.iterdir()):
+            folder.rmdir()
 
     SIDECAR.write_text(json.dumps(entries, indent=2) + "\n", encoding="utf-8")
 
