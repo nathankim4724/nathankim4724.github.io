@@ -13,6 +13,26 @@
      The bar and the gallery share both values, so their left edges line up. */
   --page: 108rem;
   --pad: clamp(1.25rem, 3.5vw, 3.5rem);
+  --bar-bg: rgba(255, 255, 255, 0.86);
+  --placeholder: #f4f4f2;
+  --lightbox-bg: rgba(250, 250, 249, 0.97);
+  --lightbox-shadow: rgba(23, 23, 26, 0.45);
+  --btn-hover: rgba(23, 23, 26, 0.06);
+}
+
+/* Dark, set by ../theme.js; see style.css for why it is not prefers-color-scheme.
+   Photographs tend to look better on near-black, so the lightbox goes darkest. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #111214;
+  --text: #ececea;
+  --muted: #9d9d97;
+  --rule: rgba(255, 255, 255, 0.1);
+  --bar-bg: rgba(17, 18, 20, 0.86);
+  --placeholder: #1c1d20;
+  --lightbox-bg: rgba(10, 10, 12, 0.97);
+  --lightbox-shadow: rgba(0, 0, 0, 0.7);
+  --btn-hover: rgba(255, 255, 255, 0.08);
 }
 
 * { box-sizing: border-box; }
@@ -41,7 +61,7 @@ body {
   position: sticky;
   top: 0;
   z-index: 10;
-  background: rgba(255, 255, 255, 0.86);
+  background: var(--bar-bg);
   border-bottom: 1px solid transparent;
   backdrop-filter: saturate(180%) blur(12px);
   -webkit-backdrop-filter: saturate(180%) blur(12px);
@@ -53,11 +73,50 @@ body {
 .bar.scrolled { border-bottom-color: var(--rule); }
 
 /* The link itself is only as wide as its text -- the wrapper is what carries
-   the page measure, so a click out in the empty half of the bar does nothing. */
+   the page measure, so a click out in the empty half of the bar does nothing.
+   The theme switch sits at the far end. */
 .bar-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   max-width: var(--page);
   margin: 0 auto;
   padding: 0 var(--pad);
+}
+
+/* Theme switch, matched to the front page's. Moon in light mode, sun in dark. */
+.theme-toggle {
+  display: inline-flex;
+  padding: 0.25rem;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.theme-toggle[hidden] { display: none; }
+
+.theme-toggle svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.theme-toggle .sun,
+[data-theme="dark"] .theme-toggle .moon { display: none; }
+[data-theme="dark"] .theme-toggle .sun { display: block; }
+
+.theme-toggle:hover,
+.theme-toggle:focus-visible { color: var(--text); }
+
+.theme-toggle:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
 }
 
 .back {
@@ -177,7 +236,7 @@ h1 {
   display: block;
   width: 100%;
   height: auto;
-  background: #f4f4f2; /* the space the picture will occupy, before it arrives */
+  background: var(--placeholder); /* the space the picture will occupy, before it arrives */
   /* The ratio comes from the manifest, so the column is laid out at its final
      height on the first frame and nothing shifts as photographs load. A file
      whose header the build script could not read falls back to `auto`: it
@@ -273,7 +332,7 @@ figcaption {
   justify-content: center;
   gap: 1rem;
   padding: clamp(1rem, 4vw, 3.5rem);
-  background: rgba(250, 250, 249, 0.97);
+  background: var(--lightbox-bg);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   animation: fade 0.2s ease;
@@ -288,7 +347,7 @@ figcaption {
   /* Leaves room for the caption line under the frame. */
   max-height: calc(100% - 2.5rem);
   object-fit: contain;
-  box-shadow: 0 24px 60px -30px rgba(23, 23, 26, 0.45);
+  box-shadow: 0 24px 60px -30px var(--lightbox-shadow);
 }
 
 .lightbox-caption {
@@ -328,7 +387,7 @@ figcaption {
 .lightbox-btn:hover,
 .lightbox-btn:focus-visible {
   color: var(--text);
-  background: rgba(23, 23, 26, 0.06);
+  background: var(--btn-hover);
 }
 
 .lightbox-btn:focus-visible {

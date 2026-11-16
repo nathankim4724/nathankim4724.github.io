@@ -1,13 +1,38 @@
+/* Light by default. Dark only when theme.js sets data-theme="dark" on <html> --
+   deliberately not prefers-color-scheme, so the page opens light for everyone
+   until they choose otherwise, and stays light without JavaScript (where the
+   <noscript> coral is drawn in dark ink for a white page). */
 :root {
-  color-scheme: light; /* light only, so the browser leaves the whites alone */
+  color-scheme: light;
   --bg: #ffffff;
+  --card: #ffffff;
   --text: #17171a;
   --muted: #3d3d38; /* 10.9:1 on the card, which is what the links sit on now */
+  --underline: rgba(23, 23, 26, 0.28);
+  --card-edge: rgba(23, 23, 26, 0.05);
+  --card-shadow: rgba(23, 23, 26, 0.28);
   /* Master dial for the drawing. collatz.js already grades every strand by
      depth, so this multiplies the whole ramp rather than setting a single
      level: turn it down to push the artwork back. */
   --coral: 1;
   --ink: #28303a; /* near-black with a cool cast */
+}
+
+/* Dark: the card is a step lighter than the page, since a drop shadow barely
+   reads on black -- the hairline does the work the shadow does in light mode.
+   The ink flips to a pale cool grey; light-on-dark reads heavier than
+   dark-on-light at the same alpha, so the dial comes down to match. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #111214;
+  --card: #18191c;
+  --text: #ececea;
+  --muted: #b4b4ae; /* ~9:1 on the card */
+  --underline: rgba(236, 236, 234, 0.3);
+  --card-edge: rgba(255, 255, 255, 0.07);
+  --card-shadow: rgba(0, 0, 0, 0.6);
+  --coral: 0.7;
+  --ink: #c9d2dc;
 }
 
 * { box-sizing: border-box; }
@@ -159,11 +184,11 @@ main {
   max-width: 61rem;
   margin: auto;
   padding: 2.5rem;
-  background: var(--bg);
+  background: var(--card);
   /* A hairline to hold the edge where a pale strand passes under it, over a
      soft drop shadow that lifts the block off the drawing. */
-  box-shadow: 0 0 0 1px rgba(23, 23, 26, 0.05),
-              0 18px 40px -18px rgba(23, 23, 26, 0.28);
+  box-shadow: 0 0 0 1px var(--card-edge),
+              0 18px 40px -18px var(--card-shadow);
 }
 
 .intro {
@@ -219,22 +244,29 @@ h1 {
   margin-bottom: 0;
 }
 
-/* The gallery link. Fixed to the top-right of the viewport, clear of the card,
-   so it sits where a site's navigation is looked for. It has to read as a link
-   on its own -- colour alone would not -- so it takes a hairline underline set
-   clear of the descenders, which fills in on hover rather than appearing from
-   nothing. */
-.gallery-link {
+/* The top-right corner: the theme switch and the gallery link, fixed to the
+   viewport clear of the card, so they sit where a site's navigation is looked
+   for. */
+.corner {
   position: fixed;
   top: 1.5rem;
   right: 1.75rem;
   z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+/* The gallery link has to read as a link on its own -- colour alone would
+   not -- so it takes a hairline underline set clear of the descenders, which
+   fills in on hover rather than appearing from nothing. */
+.gallery-link {
   padding: 0.25rem;
   color: var(--muted);
   font-size: 0.94rem;
   letter-spacing: -0.005em;
   text-decoration: underline;
-  text-decoration-color: rgba(23, 23, 26, 0.28);
+  text-decoration-color: var(--underline);
   text-decoration-thickness: 1px;
   text-underline-offset: 0.2em;
   transition: color 0.15s ease, text-decoration-color 0.15s ease;
@@ -244,6 +276,44 @@ h1 {
 .gallery-link:focus-visible {
   color: var(--text);
   text-decoration-color: currentColor;
+}
+
+/* Theme switch: a line-art icon in the same muted ink as the link beside it.
+   The moon shows in light mode (go dark), the sun in dark mode (go light). */
+.theme-toggle {
+  display: inline-flex;
+  padding: 0.25rem;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.theme-toggle[hidden] { display: none; }
+
+.theme-toggle svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.theme-toggle .sun,
+[data-theme="dark"] .theme-toggle .moon { display: none; }
+[data-theme="dark"] .theme-toggle .sun { display: block; }
+
+.theme-toggle:hover,
+.theme-toggle:focus-visible {
+  color: var(--text);
+}
+
+.theme-toggle:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
 }
 
 /* The background toggle, in the opposite corner from the gallery link and set
@@ -325,7 +395,7 @@ a:focus-visible {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  a, .gallery-link, .coral-toggle, #coral { transition: none; }
+  a, .gallery-link, .coral-toggle, .theme-toggle, #coral { transition: none; }
 }
 
 @media (max-width: 720px) {
@@ -344,7 +414,7 @@ a:focus-visible {
 
   main { padding: 1.5rem; }
 
-  .gallery-link {
+  .corner {
     top: 0.9rem;
     right: 0.9rem;
   }

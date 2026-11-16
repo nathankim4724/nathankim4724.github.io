@@ -8,6 +8,7 @@ Personal website. Static HTML/CSS, no build step, deployed via GitHub Pages.
 - `style.css` — styles
 - `nathan.jpg` — portrait, metadata stripped
 - `collatz.js` — builds, grows and lights the background artwork in the browser
+- `theme.js` — the light/dark switch, shared by both pages
 - `collatz.svg` — pre-rendered artwork, used only as the `<noscript>` fallback
 - `collatz.py` — regenerates `collatz.svg`; not part of the build
 - `CNAME` — tells GitHub Pages to serve at `nathankim.me` (do not delete)
@@ -115,8 +116,7 @@ browser would have drawn, rather than showing the whole uncropped silhouette. It
 has no `MIN_SCALE`: the fallback is one fixed image that CSS scales, so there is
 no per-viewport scale to put a floor under.
 
-The page is light-only (`color-scheme: light`). `--ink` in `style.css` sets the
-colour, and `--coral` is a master dial over the whole ramp — the drawing already
+`--ink` in `style.css` sets the colour (one value per theme), and `--coral` is a master dial over the whole ramp — the drawing already
 grades itself, so it multiplies rather than sets a level. The growth is skipped
 under `prefers-reduced-motion`, which renders the finished tree immediately.
 
@@ -126,9 +126,20 @@ it out and stops the pulses. The choice is kept in `localStorage` under
 `coral`, so it holds across visits. The button is hidden
 until `collatz.js` runs, so without JavaScript it never appears.
 
+## Dark mode
+
+The sun/moon button in the top-right corner of both pages switches between
+light and dark. The page opens light unless the visitor has picked dark before;
+the choice is kept in `localStorage` under `theme` and shared across pages.
+`theme.js` loads synchronously in `<head>` so the saved theme is on `<html>`
+(`data-theme="dark"`) before first paint, with no flash of white. Dark colours
+are the `:root[data-theme="dark"]` tokens at the top of `style.css` and
+`photography/photography.css`. Without JavaScript the button stays hidden and
+the page stays light, which is what the `<noscript>` coral is drawn for.
+
 ## The card
 
-`main` is an opaque white block over the drawing, so the portrait and the text sit
+`main` is an opaque white block (a dark grey one in dark mode) over the drawing, so the portrait and the text sit
 on plain white while the coral runs out to the margins. Its padding is part of the
 block, which is why `max-width` is 61rem for a 56rem content column.
 
