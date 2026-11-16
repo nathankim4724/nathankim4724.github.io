@@ -216,34 +216,6 @@
     return d;
   }
 
-  /* A route -- consecutive tree nodes, in either direction -- as one Catmull-Rom
-   * cubic per edge, passing through every node. The tangent at each node comes
-   * from its drawn-geometry neighbours (parent on one side, first child on the
-   * other) rather than from the route's own ends, which buys two things: pieces
-   * cut at the band boundaries meet with matching tangents instead of kinking,
-   * and the pulse lands exactly on the strands it retraces, because Catmull-Rom
-   * is symmetric under reversal. Where there is no neighbour -- the root, a tip
-   * -- the tangent clamps to the chord. A branch's odd child is not its parent's
-   * continuation (that is the even child), so the odd corner keeps a crease,
-   * which is where the drawing ought to have one. */
-  function curveD(route, s, ox, oy) {
-    const X = i => xs[i] * s + ox, Y = i => oy - ys[i] * s;
-    // The neighbour of i on the far side of j, following the drawn geometry.
-    const beyond = (i, j) => (j === parent[i] ? kids[i][0] : parent[i]);
-    let d = `M${X(route[0]).toFixed(1)} ${Y(route[0]).toFixed(1)}`;
-    for (let k = 0; k + 1 < route.length; k++) {
-      const a = route[k], b = route[k + 1];
-      const ax = X(a), ay = Y(a), bx = X(b), by = Y(b);
-      const pre = beyond(a, b), post = beyond(b, a);
-      const p0x = pre >= 0 ? X(pre) : ax, p0y = pre >= 0 ? Y(pre) : ay;
-      const p3x = post >= 0 ? X(post) : bx, p3y = post >= 0 ? Y(post) : by;
-      d += `C${(ax + (bx - p0x) / 6).toFixed(1)} ${(ay + (by - p0y) / 6).toFixed(1)}` +
-           ` ${(bx - (p3x - ax) / 6).toFixed(1)} ${(by - (p3y - ay) / 6).toFixed(1)}` +
-           ` ${bx.toFixed(1)} ${by.toFixed(1)}`;
-    }
-    return d;
-  }
-
   let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
   for (let i = 0; i < xs.length; i++) {
     if (xs[i] < x0) x0 = xs[i];

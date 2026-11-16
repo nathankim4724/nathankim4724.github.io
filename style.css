@@ -203,7 +203,7 @@ main {
   flex: 0 0 auto;
   width: clamp(180px, 45vw, 260px);
   height: auto;
-  aspect-ratio: 1000 / 1228;
+  aspect-ratio: 520 / 639;
   margin: 0;
   object-fit: contain;
 }
@@ -424,3 +424,6 @@ a:focus-visible {
     bottom: 0.9rem;
   }
 }
+
+/* 404.html: the same card, sized to its two short paragraphs. */
+main.not-found { max-width: 32rem; }

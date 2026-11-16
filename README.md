@@ -5,6 +5,7 @@ Personal website. Static HTML/CSS, no build step, deployed via GitHub Pages.
 ## Files
 
 - `index.html` — the page
+- `404.html` — served by GitHub Pages for any missing URL; uses root-absolute paths
 - `style.css` — styles
 - `nathan.jpg` — portrait, metadata stripped
 - `collatz.js` — builds, grows and lights the background artwork in the browser
