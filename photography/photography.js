@@ -807,6 +807,29 @@
     if (e.key === "ArrowLeft") { e.preventDefault(); show(current - 1); }
   });
 
+  /* Swipe to step on a touch screen. One finger only, so a pinch is left alone;
+     mostly sideways, so a vertical drag is not read as one; and not while the
+     page is pinch-zoomed, where a sideways drag is the reader panning. A drag
+     never produces a click, so the surround's close-on-tap is not tripped. */
+  var swipe = null;
+  box.addEventListener("touchstart", function (e) {
+    swipe = e.touches.length === 1 ? { x: e.touches[0].clientX, y: e.touches[0].clientY } : null;
+  }, { passive: true });
+  box.addEventListener("touchmove", function (e) {
+    if (e.touches.length > 1) swipe = null;
+  }, { passive: true });
+  box.addEventListener("touchcancel", function () { swipe = null; }, { passive: true });
+  box.addEventListener("touchend", function (e) {
+    var start = swipe;
+    swipe = null;
+    if (!start || photos.length < 2 || e.touches.length) return;
+    if (window.visualViewport && window.visualViewport.scale > 1.01) return;
+    var dx = e.changedTouches[0].clientX - start.x;
+    var dy = e.changedTouches[0].clientY - start.y;
+    if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    show(current + (dx < 0 ? 1 : -1));
+  });
+
   /* Keep tabbing inside the dialog while it is open. Three controls is a small
      enough loop to handle by hand. */
   box.addEventListener("keydown", function (e) {
